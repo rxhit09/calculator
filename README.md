@@ -1,2 +1,3 @@
-# calculator
-This is my first Calculator
+# Kist
+Lottery sample
+
