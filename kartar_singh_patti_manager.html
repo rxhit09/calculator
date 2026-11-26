@@ -1,0 +1,3189 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+  <title>Kartar Singh Patti Manager | करतार सिंह पट्टी मैनेजर</title>
+  <meta name="description" content="Private Village Patti & Committee Management System by Kartar Singh" />
+  <meta name="theme-color" content="#15803d" />
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- Google Fonts: Noto Sans Devanagari & Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Noto Sans Devanagari"', '"Plus Jakarta Sans"', 'sans-serif'],
+          },
+          colors: {
+            emerald: {
+              50: '#f0fdf4',
+              100: '#dcfce7',
+              200: '#bbf7d0',
+              500: '#22c55e',
+              600: '#16a34a',
+              700: '#15803d',
+              800: '#166534',
+              900: '#14532d',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      font-family: 'Noto Sans Devanagari', 'Plus Jakarta Sans', sans-serif;
+      background-color: #f8fafc;
+      color: #0f172a;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    /* Lucky Draw Pulse Animation */
+    @keyframes drawPulse {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.5); }
+      50% { transform: scale(1.03); box-shadow: 0 0 0 14px rgba(22, 163, 74, 0); }
+    }
+    .animate-draw {
+      animation: drawPulse 0.6s infinite;
+    }
+
+    /* Print Stylesheet for Receipts & Reports */
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #print-area, #print-area * {
+        visibility: visible;
+      }
+      #print-area {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        background: white !important;
+        padding: 20px !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col text-base antialiased selection:bg-emerald-200 selection:text-emerald-900">
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="fixed top-4 right-4 z-[100] flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+  <!-- PIN Lock Screen Overlay -->
+  <div id="lock-screen" class="fixed inset-0 z-[90] bg-gradient-to-br from-emerald-900 via-emerald-800 to-emerald-950 flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl p-6 sm:p-8 text-center border border-emerald-100">
+      <div class="flex justify-end mb-2">
+        <button onclick="toggleLanguage()" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-full bg-emerald-50 text-emerald-800 font-bold text-sm border border-emerald-200 hover:bg-emerald-100 transition">
+          <i data-lucide="languages" class="w-4 h-4"></i>
+          <span id="lock-lang-label">English</span>
+        </button>
+      </div>
+      <div class="w-20 h-20 bg-emerald-100 text-emerald-700 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-inner">
+        <i data-lucide="shield-check" class="w-10 h-10"></i>
+      </div>
+      <h1 class="text-2xl font-extrabold text-slate-900 mb-1" data-i18n="appTitle">करतार सिंह पट्टी मैनेजर</h1>
+      <p class="text-slate-600 text-sm mb-6" data-i18n="enterPinSubtitle">सुरक्षित प्रवेश के लिए 4-अंकों का एडमिन पिन दर्ज करें</p>
+
+      <form onsubmit="handleUnlock(event)" class="space-y-4">
+        <div>
+          <input id="pin-input" type="password" inputmode="numeric" maxlength="6" placeholder="••••" required
+            class="w-full text-center text-3xl tracking-[0.5em] font-extrabold py-4 px-4 rounded-2xl border-2 border-slate-300 focus:border-emerald-600 focus:ring-4 focus:ring-emerald-100 outline-none transition" />
+        </div>
+        <p id="pin-error" class="text-red-600 font-semibold text-sm hidden" data-i18n="wrongPin">गलत पिन! कृपया पुनः प्रयास करें।</p>
+        <button type="submit" class="w-full py-4 px-6 bg-emerald-700 hover:bg-emerald-800 active:scale-[0.99] text-white font-bold text-lg rounded-2xl shadow-lg shadow-emerald-700/20 transition flex items-center justify-center gap-2">
+          <i data-lucide="unlock" class="w-5 h-5"></i>
+          <span data-i18n="unlockBtn">अनलॉक करें</span>
+        </button>
+      </form>
+
+      <div class="mt-6 pt-4 border-t border-slate-100 text-xs text-slate-500">
+        <span data-i18n="defaultPinHint">डिफ़ॉल्ट पिन (पहली बार):</span> <strong class="text-emerald-700 font-bold text-sm">1234</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main App Shell -->
+  <div id="app-shell" class="hidden min-h-screen flex flex-col lg:flex-row">
+    
+    <!-- Desktop Left Sidebar -->
+    <aside class="hidden lg:flex lg:flex-col lg:w-72 lg:fixed lg:inset-y-0 bg-white border-r border-slate-200 z-30 shadow-sm">
+      <div class="p-5 bg-emerald-800 text-white flex items-center gap-3">
+        <div class="w-11 h-11 rounded-xl bg-white/15 flex items-center justify-center shrink-0">
+          <i data-lucide="landmark" class="w-6 h-6 text-emerald-100"></i>
+        </div>
+        <div class="min-w-0">
+          <h1 class="font-extrabold text-lg leading-tight truncate" id="sidebar-owner-name">करतार सिंह</h1>
+          <p class="text-xs text-emerald-200 truncate" data-i18n="pattiManagerLabel">पट्टी एवं समिति प्रबंधन</p>
+        </div>
+      </div>
+
+      <nav id="desktop-nav" class="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto">
+        <!-- Populated by JS -->
+      </nav>
+
+      <div class="p-4 border-t border-slate-200 space-y-2 bg-slate-50">
+        <button onclick="toggleLanguage()" class="w-full py-3 px-4 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold border border-emerald-200 flex items-center justify-between transition">
+          <span class="flex items-center gap-2"><i data-lucide="languages" class="w-5 h-5"></i> <span data-i18n="switchLangLabel">भाषा बदलें</span></span>
+          <span class="px-2.5 py-0.5 rounded-lg bg-emerald-700 text-white text-xs" id="desktop-lang-badge">English</span>
+        </button>
+        <button onclick="lockApp()" class="w-full py-2.5 px-4 rounded-xl bg-white hover:bg-red-50 text-slate-700 hover:text-red-700 font-semibold border border-slate-200 flex items-center justify-center gap-2 transition text-sm">
+          <i data-lucide="lock" class="w-4 h-4"></i>
+          <span data-i18n="lockApp">लॉक करें</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Wrapper -->
+    <div class="flex-1 lg:pl-72 flex flex-col min-h-screen pb-24 lg:pb-8">
+      
+      <!-- Top Header Bar (Sticky Mobile + Desktop) -->
+      <header class="sticky top-0 z-20 bg-white/95 backdrop-blur border-b border-slate-200 px-4 sm:px-6 py-3 flex items-center justify-between gap-3 shadow-xs">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="lg:hidden w-10 h-10 rounded-xl bg-emerald-700 text-white flex items-center justify-center shrink-0">
+            <i data-lucide="landmark" class="w-5 h-5"></i>
+          </div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-2">
+              <h2 id="header-page-title" class="text-lg sm:text-xl font-extrabold text-slate-900 truncate">मुख्य पृष्ठ</h2>
+              <span id="demo-mode-badge" class="hidden px-2.5 py-0.5 text-xs font-bold rounded-full bg-amber-100 text-amber-800 border border-amber-300 shrink-0" data-i18n="demoBadge">डेमो डेटा</span>
+            </div>
+            <p class="text-xs text-slate-500 truncate" id="header-subtitle">करतार सिंह • UPI: 8273246274@ptyes</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 shrink-0">
+          <!-- Instant 1-Tap Bilingual Switcher -->
+          <button onclick="toggleLanguage()" aria-label="Switch Language"
+            class="h-11 px-3.5 sm:px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-white font-bold text-sm sm:text-base shadow-sm flex items-center gap-2 transition">
+            <i data-lucide="languages" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+            <span id="header-lang-btn">English</span>
+          </button>
+
+          <button onclick="lockApp()" title="Lock App"
+            class="lg:hidden h-11 w-11 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition">
+            <i data-lucide="lock" class="w-5 h-5"></i>
+          </button>
+        </div>
+      </header>
+
+      <!-- Demo Banner (Visible if demo mode active) -->
+      <div id="demo-banner" class="hidden bg-amber-50 border-b border-amber-200 px-4 sm:px-6 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div class="flex items-start sm:items-center gap-2.5 text-amber-900 text-sm">
+          <i data-lucide="info" class="w-5 h-5 text-amber-600 shrink-0 mt-0.5 sm:mt-0"></i>
+          <span data-i18n="demoBannerText">अभी ऐप में 15 डेमो सदस्य और ₹15,00,000 की डेमो पट्टी लोड है। अपना असली डेटा शुरू करने के लिए डेमो डेटा हटाएं।</span>
+        </div>
+        <button onclick="confirmClearDemoData()" class="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-sm shrink-0 shadow-xs transition">
+          <span data-i18n="clearDemoBtn">सारा डेमो डेटा हटाएं</span>
+        </button>
+      </div>
+
+      <!-- Dynamic Page View Container -->
+      <main id="main-view" class="flex-1 p-4 sm:p-6 max-w-7xl w-full mx-auto space-y-6">
+        <!-- Rendered dynamically by JS -->
+      </main>
+    </div>
+
+    <!-- Mobile Bottom Navigation Bar -->
+    <nav class="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-white border-t border-slate-200 shadow-[0_-4px_12px_rgba(0,0,0,0.05)] px-1 py-1.5 grid grid-cols-5 gap-1">
+      <button onclick="navigate('dashboard')" data-nav="dashboard" class="mobile-nav-btn flex flex-col items-center justify-center py-1.5 rounded-xl text-xs font-bold transition">
+        <i data-lucide="layout-dashboard" class="w-5 h-5 mb-0.5"></i>
+        <span class="truncate max-w-full px-1" data-i18n="navDashboard">मुख्य पृष्ठ</span>
+      </button>
+      <button onclick="navigate('members')" data-nav="members" class="mobile-nav-btn flex flex-col items-center justify-center py-1.5 rounded-xl text-xs font-bold transition">
+        <i data-lucide="users" class="w-5 h-5 mb-0.5"></i>
+        <span class="truncate max-w-full px-1" data-i18n="navMembers">सदस्य</span>
+      </button>
+      <button onclick="navigate('payments')" data-nav="payments" class="mobile-nav-btn flex flex-col items-center justify-center py-1.5 rounded-xl text-xs font-bold transition">
+        <div class="w-9 h-9 -mt-3 rounded-full bg-emerald-700 text-white flex items-center justify-center shadow-md mb-0.5">
+          <i data-lucide="indian-rupee" class="w-5 h-5"></i>
+        </div>
+        <span class="truncate max-w-full px-1 text-emerald-800" data-i18n="navCollect">भुगतान</span>
+      </button>
+      <button onclick="navigate('pattis')" data-nav="pattis" class="mobile-nav-btn flex flex-col items-center justify-center py-1.5 rounded-xl text-xs font-bold transition">
+        <i data-lucide="trophy" class="w-5 h-5 mb-0.5"></i>
+        <span class="truncate max-w-full px-1" data-i18n="navPatti">पट्टी / ड्रॉ</span>
+      </button>
+      <button onclick="toggleMobileMoreMenu()" id="mobile-more-btn" class="mobile-nav-btn flex flex-col items-center justify-center py-1.5 rounded-xl text-xs font-bold text-slate-600 transition">
+        <i data-lucide="grid" class="w-5 h-5 mb-0.5"></i>
+        <span class="truncate max-w-full px-1" data-i18n="navMore">अन्य</span>
+      </button>
+    </nav>
+
+    <!-- Mobile "More" Drawer Modal -->
+    <div id="mobile-more-drawer" class="hidden lg:hidden fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-xs flex items-end" onclick="if(event.target===this) toggleMobileMoreMenu()">
+      <div class="bg-white w-full rounded-t-3xl p-5 pb-8 space-y-4 shadow-2xl animate-slide-up">
+        <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+          <h3 class="font-extrabold text-lg text-slate-900" data-i18n="allSections">सभी विभाग</h3>
+          <button onclick="toggleMobileMoreMenu()" class="p-2 rounded-full bg-slate-100 text-slate-600">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <button onclick="navigate('calculator'); toggleMobileMoreMenu()" class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center gap-3 text-left font-bold text-emerald-900">
+            <i data-lucide="calculator" class="w-6 h-6 text-emerald-700 shrink-0"></i>
+            <span data-i18n="navCalculator">एडवांस कैलकुलेटर</span>
+          </button>
+          <button onclick="navigate('installments'); toggleMobileMoreMenu()" class="p-4 rounded-2xl bg-blue-50 border border-blue-200 flex items-center gap-3 text-left font-bold text-blue-900">
+            <i data-lucide="calendar-check" class="w-6 h-6 text-blue-700 shrink-0"></i>
+            <span data-i18n="navInstallments">किस्त ट्रैकर</span>
+          </button>
+          <button onclick="navigate('reports'); toggleMobileMoreMenu()" class="p-4 rounded-2xl bg-purple-50 border border-purple-200 flex items-center gap-3 text-left font-bold text-purple-900">
+            <i data-lucide="file-spreadsheet" class="w-6 h-6 text-purple-700 shrink-0"></i>
+            <span data-i18n="navReports">रिपोर्ट और खाता</span>
+          </button>
+          <button onclick="navigate('settings'); toggleMobileMoreMenu()" class="p-4 rounded-2xl bg-slate-100 border border-slate-200 flex items-center gap-3 text-left font-bold text-slate-900">
+            <i data-lucide="settings" class="w-6 h-6 text-slate-700 shrink-0"></i>
+            <span data-i18n="navSettings">सेटिंग्स / बैकअप</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Universal Modal Container -->
+  <div id="modal-backdrop" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto" onclick="if(event.target===this) closeModal()">
+    <div id="modal-box" class="bg-white w-full max-w-2xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden my-auto max-h-[90vh] flex flex-col">
+      <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between shrink-0">
+        <h3 id="modal-title" class="text-xl font-extrabold text-slate-900">Modal Title</h3>
+        <button onclick="closeModal()" class="w-10 h-10 rounded-full bg-white border border-slate-200 hover:bg-slate-100 flex items-center justify-center text-slate-600 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <div id="modal-body" class="p-6 overflow-y-auto space-y-4">
+        <!-- Dynamic modal content -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Hidden Print Area for Clean Receipts / Reports -->
+  <div id="print-area" class="hidden"></div>
+
+  <script>
+    // =========================================================================
+    // 1. CENTRALIZED BILINGUAL DICTIONARY (HINDI <-> ENGLISH)
+    // =========================================================================
+    const TRANSLATIONS = {
+      hi: {
+        appTitle: "करतार सिंह पट्टी मैनेजर",
+        pattiManagerLabel: "पट्टी एवं समिति प्रबंधन",
+        enterPinSubtitle: "सुरक्षित प्रवेश के लिए 4-अंकों का एडमिन पिन दर्ज करें",
+        wrongPin: "गलत पिन! कृपया पुनः प्रयास करें।",
+        unlockBtn: "अनलॉक करें",
+        defaultPinHint: "डिफ़ॉल्ट पिन (पहली बार):",
+        switchLangLabel: "भाषा बदलें",
+        lockApp: "लॉक करें",
+        demoBadge: "डेमो डेटा",
+        demoBannerText: "अभी ऐप में 15 डेमो सदस्य और ₹15,00,000 की डेमो पट्टी लोड है। अपना असली डेटा शुरू करने के लिए डेमो डेटा हटाएं।",
+        clearDemoBtn: "सारा डेमो डेटा हटाएं",
+        allSections: "सभी विभाग",
+
+        // Navigation
+        navDashboard: "मुख्य पृष्ठ",
+        navMembers: "सदस्य",
+        navPatti: "पट्टी प्रबंधन",
+        navCollect: "भुगतान संग्रह",
+        navCalculator: "एडवांस कैलकुलेटर",
+        navInstallments: "किस्त ट्रैकर",
+        navReports: "रिपोर्ट",
+        navSettings: "सेटिंग्स",
+        navMore: "अन्य",
+
+        // Common Actions
+        save: "सेव करें",
+        cancel: "रद्द करें",
+        edit: "संपादित करें",
+        delete: "हटाएं",
+        search: "खोजें...",
+        view: "देखें",
+        close: "बंद करें",
+        confirm: "पुष्टि करें",
+        print: "प्रिंट / PDF",
+        exportCsv: "Excel / CSV डाउनलोड",
+        copy: "कॉपी करें",
+        copied: "कॉपी हो गया!",
+        actions: "कार्रवाई",
+        status: "स्थिति",
+        date: "तारीख",
+        amount: "राशि",
+        notes: "टिप्पणी / नोट्स",
+        month: "माह",
+        all: "सभी",
+
+        // Statuses
+        paid: "जमा",
+        unpaid: "बाकी",
+        partial: "आंशिक भुगतान",
+        active: "सक्रिय",
+        demoActive: "डेमो सक्रिय",
+        paused: "रुकी हुई",
+        completed: "पूर्ण",
+        cash: "नकद (Cash)",
+        upi: "यूपीआई (UPI)",
+
+        // Dashboard
+        totalMembers: "कुल सदस्य",
+        totalPattiAmount: "कुल पट्टी राशि",
+        totalCollected: "कुल जमा राशि",
+        totalPending: "कुल बाकी राशि",
+        currentMonthInstallment: "वर्तमान माह / किस्त",
+        nextPattiDate: "अगली पट्टी तारीख",
+        activePatti: "सक्रिय पट्टी",
+        outstandingAdvances: "कुल बकाया एडवांस",
+        quickActions: "त्वरित कार्य (Quick Actions)",
+        collectPayment: "भुगतान जमा करें",
+        addMember: "सदस्य जोड़ें",
+        createNewPatti: "नई पट्टी बनाएं",
+        viewReports: "रिपोर्ट देखें",
+        currentPattiSummary: "वर्तमान पट्टी सारांश",
+        memberPaymentOverview: "सदस्य भुगतान स्थिति",
+        recentTransactions: "हाल के भुगतान लेनदेन",
+        recentWinners: "हाल के पट्टी विजेता",
+        noRecordsYet: "अभी कोई रिकॉर्ड उपलब्ध नहीं है।",
+
+        // Members
+        memberManagement: "सदस्य प्रबंधन",
+        searchMemberPlaceholder: "नाम या मोबाइल नंबर से खोजें...",
+        memberId: "सदस्य ID",
+        fullName: "पूरा नाम",
+        mobileNumber: "मोबाइल नंबर",
+        address: "पता / गाँव",
+        monthlyContribution: "मासिक किस्त",
+        totalPaid: "कुल जमा",
+        pendingAmount: "बाकी राशि",
+        advanceTaken: "लिया गया एडवांस",
+        advanceRemaining: "शेष एडवांस",
+        memberProfile: "सदस्य प्रोफ़ाइल और खाता",
+        paymentHistory: "भुगतान इतिहास",
+        winnerHistory: "पट्टी विजेता इतिहास",
+        editMember: "सदस्य संपादित करें",
+        deleteMemberConfirm: "क्या आप वाकई इस सदस्य को हटाना चाहते हैं? यह क्रिया वापस नहीं ली जा सकती।",
+
+        // Patti & Winner Draw
+        pattiManagement: "पट्टी समिति प्रबंधन",
+        pattiName: "पट्टी का नाम",
+        participantsCount: "सदस्यों की संख्या",
+        durationMonths: "अवधि (महीने)",
+        startDate: "शुरू होने की तारीख",
+        endDate: "समाप्ति तारीख",
+        currentMonth: "वर्तमान महीना",
+        noDuplicateWinners: "एक सदस्य केवल एक बार ही पट्टी जीत सकता है",
+        winnerDrawTitle: "पट्टी विजेता ड्रॉ (Lucky Draw)",
+        eligibleMembers: "पात्र सदस्य",
+        startLuckyDraw: "लकी ड्रॉ चलाएं",
+        drawingWinner: "विजेता चुना जा रहा है...",
+        manualWinnerSelect: "मैनुअल विजेता चुनें",
+        selectWinnerMember: "विजेता सदस्य चुनें",
+        manualReason: "मैनुअल चयन का कारण (अनिवार्य)",
+        recordWinnerBtn: "विजेता रिकॉर्ड सेव करें",
+        winnerAnnouncement: "बधाई हो! इस माह के पट्टी विजेता हैं:",
+        drawHistoryTitle: "स्थायी विजेता ड्रॉ इतिहास (ऑडिट रिकॉर्ड)",
+        selectionMode: "चयन विधि",
+        randomDraw: "लकी ड्रॉ (Random)",
+        manualSelect: "मैनुअल चयन",
+        manageParticipants: "सदस्य प्रबंधित करें",
+        pausePatti: "रोकें",
+        activatePatti: "सक्रिय करें",
+        completePatti: "पूर्ण करें",
+
+        // Payment Collection
+        upiDetailsTitle: "UPI भुगतान विवरण (सीधा ट्रांसफर)",
+        accountHolder: "खाताधारक",
+        copyUpiId: "UPI ID कॉपी करें",
+        showHideQr: "UPI QR कोड दिखाएं / छिपाएं",
+        upiInstruction: "सदस्य से इस UPI ID पर भुगतान करने के लिए कहें। राशि प्राप्त होने की पुष्टि करने के बाद ही नीचे फॉर्म से रसीद दर्ज करें।",
+        recordNewPayment: "नया भुगतान दर्ज करें",
+        selectMember: "सदस्य चुनें",
+        selectPatti: "पट्टी चुनें",
+        paymentAmount: "भुगतान राशि (₹)",
+        paymentMethod: "भुगतान माध्यम",
+        paymentDate: "भुगतान तारीख",
+        upiRefId: "UPI ट्रांजेक्शन रेफरेंस ID (वैकल्पिक)",
+        savePaymentBtn: "भुगतान सेव करें और रसीद बनाएं",
+        editPaymentTitle: "भुगतान सुधार (ऑडिट लॉग सहित)",
+        correctionReason: "सुधार का कारण (अनिवार्य)",
+        paymentReceipt: "भुगतान रसीद",
+        receiptNo: "रसीद संख्या",
+        receivedFrom: "से प्राप्त हुए",
+        receivedBy: "प्राप्तकर्ता",
+        thankYouReceipt: "धन्यवाद! यह डिजिटल रसीद करतार सिंह पट्टी मैनेजर द्वारा जनरेट की गई है।",
+
+        // Advance Calculator
+        advanceCalculatorTitle: "सदस्य एडवांस / ऋण कैलकुलेटर",
+        advanceAmount: "एडवांस राशि (₹)",
+        repaymentDuration: "वापसी अवधि (महीने)",
+        interestMode: "ब्याज प्रकार",
+        noInterest: "बिना ब्याज (0%)",
+        flatInterest: "फ्लैट ब्याज (% वार्षिक)",
+        reducingInterest: "घटते शेष पर ब्याज (Reducing %)",
+        interestRate: "ब्याज दर (% प्रति वर्ष)",
+        alreadyRepaid: "पहले से वापस की गई राशि (₹)",
+        monthlyInstallment: "मासिक किस्त (EMI)",
+        totalInterest: "कुल ब्याज",
+        totalRepayment: "कुल वापसी राशि",
+        remainingBalance: "शेष बकाया राशि",
+        completionDate: "समाप्ति तारीख",
+        repaymentSchedule: "मासिक वापसी अनुसूची",
+        saveAdvanceToMember: "सदस्य के खाते में यह एडवांस जोड़ें",
+        recordAdvanceRepayment: "एडवांस किस्त जमा करें",
+
+        // Installments
+        installmentTrackerTitle: "मासिक किस्त ट्रैकर",
+        dueDate: "देय तारीख",
+        amountDue: "देय राशि",
+        amountCollected: "जमा राशि",
+        markPaid: "पूर्ण जमा करें",
+        recordPartial: "आंशिक जमा",
+
+        // Reports
+        reportsTitle: "रिपोर्ट और वित्तीय खाता बही",
+        reportMonthly: "मासिक संग्रह रिपोर्ट",
+        reportMemberLedger: "सदस्य-वार खाता बही",
+        reportPattiLedger: "पट्टी-वार खाता बही",
+        reportPending: "बाकी भुगतान रिपोर्ट",
+        reportAdvances: "एडवांस रिपोर्ट",
+        reportWinners: "विजेता इतिहास रिपोर्ट",
+        reportAudit: "संपादन ऑडिट लॉग",
+
+        // Settings
+        settingsTitle: "एडमिन सेटिंग्स और डेटा बैकअप",
+        ownerProfile: "मालिक प्रोफ़ाइल और डिफ़ॉल्ट नियम",
+        ownerName: "मालिक का नाम",
+        ownerMobile: "मालिक मोबाइल नंबर",
+        defaultPattiAmt: "डिफ़ॉल्ट पट्टी राशि (₹)",
+        defaultMembersCount: "डिफ़ॉल्ट सदस्य संख्या",
+        defaultDuration: "डिफ़ॉल्ट अवधि (महीने)",
+        defaultLanguage: "डिफ़ॉल्ट भाषा",
+        adminPin: "नया एडमिन पिन (4-6 अंक)",
+        backupRestoreTitle: "डेटा बैकअप और रीस्टोर (JSON फ़ाइल)",
+        backupDesc: "अपने फ़ोन या कंप्यूटर में पूरे डेटा की सुरक्षित कॉपी डाउनलोड करें। नया फ़ोन लेने पर आप इस फ़ाइल से सारा डेटा वापस ला सकते हैं।",
+        downloadBackup: "बैकअप डाउनलोड करें (.json)",
+        restoreBackup: "बैकअप फ़ाइल से डेटा वापस लाएं",
+        dangerZone: "खतरनाक क्षेत्र (डेटा रीसेट)",
+        resetAllDataBtn: "सारा डेटा साफ़ करें (खाली शुरुआत)",
+        restoreDemoBtn: "डेमो डेटा पुनः लोड करें"
+      },
+      en: {
+        appTitle: "Kartar Singh Patti Manager",
+        pattiManagerLabel: "Patti & Committee System",
+        enterPinSubtitle: "Enter your 4-digit Admin PIN to unlock",
+        wrongPin: "Incorrect PIN! Please try again.",
+        unlockBtn: "Unlock App",
+        defaultPinHint: "Default PIN (First Time):",
+        switchLangLabel: "Language",
+        lockApp: "Lock App",
+        demoBadge: "Demo Data",
+        demoBannerText: "Currently showing 15 demo members and a ₹15,00,000 demo Patti. Clear demo data before entering real records.",
+        clearDemoBtn: "Clear All Demo Data",
+        allSections: "All Sections",
+
+        // Navigation
+        navDashboard: "Dashboard",
+        navMembers: "Members",
+        navPatti: "Patti & Draw",
+        navCollect: "Payments",
+        navCalculator: "Advance Calc",
+        navInstallments: "Installments",
+        navReports: "Reports",
+        navSettings: "Settings",
+        navMore: "More",
+
+        // Common Actions
+        save: "Save",
+        cancel: "Cancel",
+        edit: "Edit",
+        delete: "Delete",
+        search: "Search...",
+        view: "View",
+        close: "Close",
+        confirm: "Confirm",
+        print: "Print / PDF",
+        exportCsv: "Export CSV / Excel",
+        copy: "Copy",
+        copied: "Copied!",
+        actions: "Actions",
+        status: "Status",
+        date: "Date",
+        amount: "Amount",
+        notes: "Notes",
+        month: "Month",
+        all: "All",
+
+        // Statuses
+        paid: "Paid",
+        unpaid: "Unpaid",
+        partial: "Partial Payment",
+        active: "Active",
+        demoActive: "Demo Active",
+        paused: "Paused",
+        completed: "Completed",
+        cash: "Cash",
+        upi: "UPI",
+
+        // Dashboard
+        totalMembers: "Total Members",
+        totalPattiAmount: "Total Patti Amount",
+        totalCollected: "Total Collected",
+        totalPending: "Total Pending",
+        currentMonthInstallment: "Current Month / Installment",
+        nextPattiDate: "Next Patti Date",
+        activePatti: "Active Patti",
+        outstandingAdvances: "Outstanding Advances",
+        quickActions: "Quick Actions",
+        collectPayment: "Collect Payment",
+        addMember: "Add Member",
+        createNewPatti: "Create New Patti",
+        viewReports: "View Reports",
+        currentPattiSummary: "Current Patti Summary",
+        memberPaymentOverview: "Member Payment Status",
+        recentTransactions: "Recent Payment Transactions",
+        recentWinners: "Recent Winner History",
+        noRecordsYet: "No records found yet.",
+
+        // Members
+        memberManagement: "Members Management",
+        searchMemberPlaceholder: "Search by name or mobile number...",
+        memberId: "Member ID",
+        fullName: "Full Name",
+        mobileNumber: "Mobile Number",
+        address: "Address / Village",
+        monthlyContribution: "Monthly Installment",
+        totalPaid: "Total Paid",
+        pendingAmount: "Pending Amount",
+        advanceTaken: "Advance Taken",
+        advanceRemaining: "Advance Remaining",
+        memberProfile: "Member Profile & Ledger",
+        paymentHistory: "Payment History",
+        winnerHistory: "Patti Winner History",
+        editMember: "Edit Member",
+        deleteMemberConfirm: "Are you sure you want to delete this member? This action cannot be undone.",
+
+        // Patti & Winner Draw
+        pattiManagement: "Patti Committee Management",
+        pattiName: "Patti Name / Title",
+        participantsCount: "Participants",
+        durationMonths: "Duration (Months)",
+        startDate: "Start Date",
+        endDate: "End Date",
+        currentMonth: "Current Month",
+        noDuplicateWinners: "Prevent duplicate winners in same Patti",
+        winnerDrawTitle: "Patti Winner Draw",
+        eligibleMembers: "Eligible Members",
+        startLuckyDraw: "Run Lucky Draw",
+        drawingWinner: "Selecting Winner...",
+        manualWinnerSelect: "Manual Winner Selection",
+        selectWinnerMember: "Select Winner Member",
+        manualReason: "Reason for Manual Selection (Mandatory)",
+        recordWinnerBtn: "Save Winner Record",
+        winnerAnnouncement: "Congratulations! This month's Patti winner is:",
+        drawHistoryTitle: "Permanent Winner Draw History (Auditable)",
+        selectionMode: "Selection Mode",
+        randomDraw: "Lucky Draw (Random)",
+        manualSelect: "Manual Selection",
+        manageParticipants: "Manage Participants",
+        pausePatti: "Pause",
+        activatePatti: "Activate",
+        completePatti: "Complete",
+
+        // Payment Collection
+        upiDetailsTitle: "UPI Payment Details (Direct Transfer)",
+        accountHolder: "Account Holder",
+        copyUpiId: "Copy UPI ID",
+        showHideQr: "Show / Hide UPI QR Code",
+        upiInstruction: "Ask the member to pay to this UPI ID. Only record the payment below after manually verifying receipt in your bank/UPI app.",
+        recordNewPayment: "Record New Payment",
+        selectMember: "Select Member",
+        selectPatti: "Select Patti",
+        paymentAmount: "Payment Amount (₹)",
+        paymentMethod: "Payment Method",
+        paymentDate: "Payment Date",
+        upiRefId: "UPI Transaction Ref ID (Optional)",
+        savePaymentBtn: "Save Payment & Generate Receipt",
+        editPaymentTitle: "Edit Payment Entry (Logged in Audit Trail)",
+        correctionReason: "Reason for Correction (Mandatory)",
+        paymentReceipt: "Payment Receipt",
+        receiptNo: "Receipt No",
+        receivedFrom: "Received From",
+        receivedBy: "Received By",
+        thankYouReceipt: "Thank you! Digital receipt generated by Kartar Singh Patti Manager.",
+
+        // Advance Calculator
+        advanceCalculatorTitle: "Member Advance / Loan Calculator",
+        advanceAmount: "Advance Amount (₹)",
+        repaymentDuration: "Repayment Duration (Months)",
+        interestMode: "Interest Calculation Mode",
+        noInterest: "No Interest (0%)",
+        flatInterest: "Flat Interest (% p.a.)",
+        reducingInterest: "Reducing Balance (% p.a.)",
+        interestRate: "Interest Rate (% per annum)",
+        alreadyRepaid: "Amount Already Repaid (₹)",
+        monthlyInstallment: "Monthly Installment",
+        totalInterest: "Total Interest",
+        totalRepayment: "Total Repayment",
+        remainingBalance: "Remaining Balance",
+        completionDate: "Completion Date",
+        repaymentSchedule: "Installment-wise Repayment Schedule",
+        saveAdvanceToMember: "Save Advance to Member Record",
+        recordAdvanceRepayment: "Record Advance Repayment",
+
+        // Installments
+        installmentTrackerTitle: "Monthly Installment Tracker",
+        dueDate: "Due Date",
+        amountDue: "Amount Due",
+        amountCollected: "Collected",
+        markPaid: "Mark Paid",
+        recordPartial: "Record Partial",
+
+        // Reports
+        reportsTitle: "Reports & Financial Ledger",
+        reportMonthly: "Monthly Collection Report",
+        reportMemberLedger: "Member-wise Ledger",
+        reportPattiLedger: "Patti-wise Ledger",
+        reportPending: "Pending Payments Report",
+        reportAdvances: "Advance & Loan Report",
+        reportWinners: "Winner History Report",
+        reportAudit: "Financial Edit Audit Log",
+
+        // Settings
+        settingsTitle: "Admin Settings & Data Backup",
+        ownerProfile: "Owner Profile & Default Rules",
+        ownerName: "Owner Name",
+        ownerMobile: "Owner Mobile Number",
+        defaultPattiAmt: "Default Patti Amount (₹)",
+        defaultMembersCount: "Default Members Count",
+        defaultDuration: "Default Duration (Months)",
+        defaultLanguage: "Default Language",
+        adminPin: "New Admin PIN (4-6 digits)",
+        backupRestoreTitle: "Data Backup & Restore (JSON File)",
+        backupDesc: "Download a complete backup file to your phone. You can restore all members, payments, and Patti records anytime.",
+        downloadBackup: "Download Backup (.json)",
+        restoreBackup: "Restore from Backup File",
+        dangerZone: "Danger Zone (Reset Data)",
+        resetAllDataBtn: "Clear All Data (Start Fresh)",
+        restoreDemoBtn: "Reload Demo Data"
+      }
+    };
+
+    // =========================================================================
+    // 2. STATE MANAGEMENT & PERSISTENCE (localStorage)
+    // =========================================================================
+    const STORAGE_KEY = 'kartar_singh_patti_db_v1';
+    let currentLang = 'hi';
+    let currentView = 'dashboard';
+    let isUnlocked = false;
+
+    // Filter states
+    let memberSearch = '';
+    let memberStatusFilter = 'all';
+    let installmentPattiFilter = '';
+    let installmentMonthFilter = '4';
+    let installmentStatusFilter = 'all';
+    let activeReportTab = 'monthly';
+    let reportMemberFilter = 'all';
+    let reportMethodFilter = 'all';
+
+    // Default Initial Seed Data Generator
+    function createInitialDemoState() {
+      const demoMembers = [
+        { id: 'MEM-101', name: 'रमेश शर्मा / Ramesh Sharma', phone: '9876500001', address: 'वार्ड 1, मुख्य बाज़ार', contribution: 100000, advanceTaken: 50000, advanceRepaid: 20000, status: 'active' },
+        { id: 'MEM-102', name: 'सुरेश वर्मा / Suresh Verma', phone: '9876500002', address: 'वार्ड 2, मंदिर रोड', contribution: 100000, advanceTaken: 0, advanceRepaid: 0, status: 'active' },
+        { id: 'MEM-103', name: 'महेश यादव / Mahesh Yadav', phone: '9876500003', address: 'वार्ड 3, पश्चिम मोहल्ला', contribution: 100000, advanceTaken: 30000, advanceRepaid: 15000, status: 'active' },
+        { id: 'MEM-104', name: 'राजेश गुप्ता / Rajesh Gupta', phone: '9876500004', address: 'वार्ड 1, स्टेशन रोड', contribution: 100000, advanceTaken: 0, advanceRepaid: 0, status: 'active' },
+        { id: 'MEM-105', name: 'दिनेश ठाकुर / Dinesh Thakur', phone: '9876500005', address: 'वार्ड 4, ठाकुर मोहल्ला', contribution: 100000, advanceTaken: 0, advanceRepaid: 0, status: 'active' },
+        { id: 'MEM-106', name: 'मुकेश पटेल / Mukesh Patel', phone: '9876500006', address: 'वार्ड 5, किसान चौक', contribution: 100000, advanceTaken: 40000, advanceRepaid: 10000, status: 'active' },
+        { id: 'MEM-107', name: 'नरेश चौहान / Naresh Chauhan', phone: '9876500007', address: 'वार्ड 2, स्कूल के पास', contribution: 100000, advanceTaken: 0, advanceRepaid: 0, status: 'active' },
+        { id: 'MEM-108', name: 'राकेश जोशी / Rakesh Joshi', phone: '9876500008', address: 'वार्ड 6, पुरानी बस्ती', contribution: 100000, advanceTaken: 0, advanceRepaid: 0, status: 'active' },
+        { id: 'MEM-109', name: 'हरीश तिवारी / Harish Tiwari', phone: '9876500009', address: 'वार्ड 3, शिव मंदिर गली', contribution: 100000, advanceTaken: 25000, advanceRepaid: 25000, status: 'active' },
+        { id: 'MEM-110', name: 'योगेश मिश्रा / Yogesh Mishra', phone: '9876500010', address: 'वार्ड 4, नया बाज़ार', contribution: 100000, advanceTaken: 0, advanceRepaid: 0, status: 'active' },
+        { id: 'MEM-111', name: 'संतोष कुमार / Santosh Kumar', phone: '9876500011', address: 'वार्ड 5, नहर रोड', contribution: 100000, advanceTaken: 0, advanceRepaid: 0, status: 'active' },
+        { id: 'MEM-112', name: 'अशोक सैनी / Ashok Saini', phone: '9876500012', address: 'वार्ड 6, बाग़ मोहल्ला', contribution: 100000, advanceTaken: 60000, advanceRepaid: 20000, status: 'active' },
+        { id: 'MEM-113', name: 'मनोज अग्रवाल / Manoj Agarwal', phone: '9876500013', address: 'वार्ड 1, अनाज मंडी', contribution: 100000, advanceTaken: 0, advanceRepaid: 0, status: 'active' },
+        { id: 'MEM-114', name: 'विनोद राठौर / Vinod Rathore', phone: '9876500014', address: 'वार्ड 2, उत्तर टोला', contribution: 100000, advanceTaken: 0, advanceRepaid: 0, status: 'active' },
+        { id: 'MEM-115', name: 'प्रकाश सोलंकी / Prakash Solanki', phone: '9876500015', address: 'वार्ड 4, दक्षिण मोहल्ला', contribution: 100000, advanceTaken: 0, advanceRepaid: 0, status: 'active' },
+      ];
+
+      const demoPatti = {
+        id: 'PAT-2026-01',
+        name: 'गणेश पट्टी समूह 2026 / Ganesh Patti Group 2026',
+        totalAmount: 1500000,
+        duration: 13,
+        monthlyInstallment: 100000,
+        startDate: '2026-08-05',
+        endDate: '2027-08-05',
+        nextDate: '2026-12-05',
+        currentMonth: 4,
+        status: 'demoActive',
+        noDuplicateWinners: true,
+        memberIds: demoMembers.map(m => m.id)
+      };
+
+      const demoWinners = [
+        { id: 'WIN-001', pattiId: 'PAT-2026-01', month: 1, memberId: 'MEM-104', date: '2026-08-05', mode: 'random', reason: 'माह 1 लकी ड्रॉ विजेता', amount: 1500000 },
+        { id: 'WIN-002', pattiId: 'PAT-2026-01', month: 2, memberId: 'MEM-109', date: '2026-09-05', mode: 'random', reason: 'माह 2 लकी ड्रॉ विजेता', amount: 1500000 },
+        { id: 'WIN-003', pattiId: 'PAT-2026-01', month: 3, memberId: 'MEM-102', date: '2026-10-05', mode: 'manual', reason: 'पारिवारिक विवाह आवश्यकता हेतु सहमति से चयन', amount: 1500000 }
+      ];
+
+      // Create payments for Months 1, 2, 3 (mostly paid) and Month 4 (mix of Paid, Partial, Unpaid)
+      const demoPayments = [];
+      let payCounter = 1001;
+      demoMembers.forEach((m, idx) => {
+        // Months 1 to 3 full paid
+        for (let mo = 1; mo <= 3; mo++) {
+          demoPayments.push({
+            id: `PAY-${payCounter++}`,
+            pattiId: 'PAT-2026-01',
+            memberId: m.id,
+            month: mo,
+            amount: 100000,
+            method: idx % 2 === 0 ? 'upi' : 'cash',
+            date: `2026-0${7 + mo}-05`,
+            upiRef: idx % 2 === 0 ? `UPI${600000 + payCounter}` : '',
+            notes: `माह ${mo} किस्त जमा`
+          });
+        }
+        // Month 4: First 9 Paid, next 3 Partial (₹50,000), last 3 Unpaid
+        if (idx < 9) {
+          demoPayments.push({
+            id: `PAY-${payCounter++}`,
+            pattiId: 'PAT-2026-01',
+            memberId: m.id,
+            month: 4,
+            amount: 100000,
+            method: idx % 3 === 0 ? 'cash' : 'upi',
+            date: '2026-11-05',
+            upiRef: idx % 3 !== 0 ? `UPI${700000 + payCounter}` : '',
+            notes: 'माह 4 पूर्ण किस्त'
+          });
+        } else if (idx < 12) {
+          demoPayments.push({
+            id: `PAY-${payCounter++}`,
+            pattiId: 'PAT-2026-01',
+            memberId: m.id,
+            month: 4,
+            amount: 50000,
+            method: 'cash',
+            date: '2026-11-10',
+            upiRef: '',
+            notes: 'माह 4 आंशिक भुगतान (₹50,000 शेष)'
+          });
+        }
+      });
+
+      return {
+        isDemo: true,
+        settings: {
+          ownerName: 'Kartar Singh',
+          upiId: '8273246274@ptyes',
+          ownerMobile: '8273246274',
+          defaultPattiAmount: 1500000,
+          defaultMembersCount: 15,
+          defaultDuration: 13,
+          defaultLanguage: 'hi',
+          adminPin: '1234'
+        },
+        members: demoMembers,
+        pattis: [demoPatti],
+        payments: demoPayments,
+        winners: demoWinners,
+        installmentOverrides: {}, // key: `${pattiId}_${month}_${memberId}` -> { dueDate, amountDue, notes }
+        auditLog: [
+          {
+            id: 'AUD-001',
+            timestamp: '2026-11-01 10:00 AM',
+            action: 'System Initialized with Demo Data (15 Members, ₹15,00,000 Patti)'
+          }
+        ]
+      };
+    }
+
+    let db = null;
+    db = loadDB();
+
+    function loadDB() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && parsed.settings && Array.isArray(parsed.members)) {
+            return parsed;
+          }
+        }
+      } catch (e) {
+        console.error('Failed to read localStorage:', e);
+      }
+      const initial = createInitialDemoState();
+      saveDB(initial);
+      return initial;
+    }
+
+    function saveDB(newState) {
+      if (newState !== undefined) {
+        db = newState;
+      }
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+      } catch (e) {
+        showToast('Storage Error: Could not save data locally.', 'error');
+      }
+    }
+
+    function logAudit(actionText) {
+      const now = new Date().toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
+      db.auditLog.unshift({
+        id: 'AUD-' + Date.now().toString().slice(-5),
+        timestamp: now,
+        action: actionText
+      });
+      saveDB();
+    }
+
+    // =========================================================================
+    // 3. HELPER UTILITIES (Currency, i18n, Financial Aggregations)
+    // =========================================================================
+    function t(key) {
+      return (TRANSLATIONS[currentLang] && TRANSLATIONS[currentLang][key]) || TRANSLATIONS['hi'][key] || key;
+    }
+
+    function formatINR(num) {
+      const n = Number(num) || 0;
+      return '₹' + n.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+    }
+
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      const el = document.createElement('div');
+      const colors = type === 'error'
+        ? 'bg-red-700 text-white border-red-800'
+        : type === 'warning'
+        ? 'bg-amber-600 text-white border-amber-700'
+        : 'bg-emerald-800 text-white border-emerald-900';
+
+      el.className = `pointer-events-auto px-4 py-3.5 rounded-2xl shadow-xl border font-bold text-sm flex items-center gap-2.5 transition-all transform translate-y-0 ${colors}`;
+      el.innerHTML = `
+        <i data-lucide="${type === 'error' ? 'alert-circle' : 'check-circle-2'}" class="w-5 h-5 shrink-0"></i>
+        <span>${message}</span>
+      `;
+      container.appendChild(el);
+      lucide.createIcons();
+      setTimeout(() => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(-10px)';
+        setTimeout(() => el.remove(), 300);
+      }, 3200);
+    }
+
+    function getMemberById(id) {
+      return db.members.find(m => m.id === id);
+    }
+
+    function getPattiById(id) {
+      return db.pattis.find(p => p.id === id);
+    }
+
+    // Compute dynamic financials for any member
+    function getMemberFinancials(memberId) {
+      const member = getMemberById(memberId);
+      if (!member) return { paid: 0, expected: 0, pending: 0, status: 'unpaid', advanceRemaining: 0 };
+
+      const activePatti = db.pattis.find(p => p.memberIds.includes(memberId) && (p.status === 'active' || p.status === 'demoActive')) || db.pattis[0];
+      const monthsElapsed = activePatti ? activePatti.currentMonth : 1;
+      const monthlyRate = activePatti ? activePatti.monthlyInstallment : (member.contribution || 100000);
+      const expectedTotal = activePatti ? monthsElapsed * monthlyRate : monthlyRate;
+
+      const memberPayments = db.payments.filter(p => p.memberId === memberId && (!activePatti || p.pattiId === activePatti.id));
+      const totalPaid = memberPayments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
+      const pending = Math.max(0, expectedTotal - totalPaid);
+
+      // Current month status check
+      const currentMonthPaid = activePatti
+        ? memberPayments.filter(p => Number(p.month) === Number(activePatti.currentMonth)).reduce((s, p) => s + Number(p.amount), 0)
+        : totalPaid;
+
+      let status = 'unpaid';
+      if (currentMonthPaid >= monthlyRate) status = 'paid';
+      else if (currentMonthPaid > 0) status = 'partial';
+
+      const advanceRemaining = Math.max(0, Number(member.advanceTaken || 0) - Number(member.advanceRepaid || 0));
+
+      return {
+        paid: totalPaid,
+        expected: expectedTotal,
+        pending,
+        status,
+        currentMonthPaid,
+        monthlyRate,
+        advanceRemaining
+      };
+    }
+
+    // =========================================================================
+    // 4. LANGUAGE SWITCHER & AUTHENTICATION
+    // =========================================================================
+    function toggleLanguage() {
+      currentLang = currentLang === 'hi' ? 'en' : 'hi';
+      localStorage.setItem('kartar_patti_lang', currentLang);
+      document.documentElement.lang = currentLang;
+      applyStaticTranslations();
+      if (isUnlocked) {
+        renderSidebar();
+        renderView();
+      }
+    }
+
+    function applyStaticTranslations() {
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        el.textContent = t(key);
+      });
+      const toggleText = currentLang === 'hi' ? 'English' : 'हिंदी';
+      const lockBtn = document.getElementById('lock-lang-label');
+      const headerBtn = document.getElementById('header-lang-btn');
+      const desktopBadge = document.getElementById('desktop-lang-badge');
+      if (lockBtn) lockBtn.textContent = toggleText;
+      if (headerBtn) headerBtn.textContent = toggleText;
+      if (desktopBadge) desktopBadge.textContent = toggleText;
+    }
+
+    function handleUnlock(e) {
+      e.preventDefault();
+      const entered = document.getElementById('pin-input').value.trim();
+      const correctPin = db.settings.adminPin || '1234';
+      if (entered === correctPin) {
+        isUnlocked = true;
+        document.getElementById('pin-error').classList.add('hidden');
+        document.getElementById('pin-input').value = '';
+        document.getElementById('lock-screen').classList.add('hidden');
+        document.getElementById('app-shell').classList.remove('hidden');
+        updateHeaderChrome();
+        renderSidebar();
+        renderView();
+        lucide.createIcons();
+      } else {
+        document.getElementById('pin-error').classList.remove('hidden');
+      }
+    }
+
+    function lockApp() {
+      isUnlocked = false;
+      document.getElementById('app-shell').classList.add('hidden');
+      document.getElementById('lock-screen').classList.remove('hidden');
+      document.getElementById('pin-input').focus();
+    }
+
+    function updateHeaderChrome() {
+      document.getElementById('sidebar-owner-name').textContent = db.settings.ownerName || 'Kartar Singh';
+      document.getElementById('header-subtitle').textContent = `${db.settings.ownerName} • UPI: ${db.settings.upiId}`;
+      const demoBadge = document.getElementById('demo-mode-badge');
+      const demoBanner = document.getElementById('demo-banner');
+      if (db.isDemo) {
+        demoBadge.classList.remove('hidden');
+        demoBanner.classList.remove('hidden');
+      } else {
+        demoBadge.classList.add('hidden');
+        demoBanner.classList.add('hidden');
+      }
+    }
+
+    // =========================================================================
+    // 5. NAVIGATION & SIDEBAR
+    // =========================================================================
+    const NAV_ITEMS = [
+      { id: 'dashboard', icon: 'layout-dashboard', labelKey: 'navDashboard' },
+      { id: 'members', icon: 'users', labelKey: 'navMembers' },
+      { id: 'pattis', icon: 'trophy', labelKey: 'navPatti' },
+      { id: 'payments', icon: 'indian-rupee', labelKey: 'navCollect' },
+      { id: 'calculator', icon: 'calculator', labelKey: 'navCalculator' },
+      { id: 'installments', icon: 'calendar-check', labelKey: 'navInstallments' },
+      { id: 'reports', icon: 'file-spreadsheet', labelKey: 'navReports' },
+      { id: 'settings', icon: 'settings', labelKey: 'navSettings' }
+    ];
+
+    function navigate(viewId) {
+      currentView = viewId;
+      renderSidebar();
+      renderView();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function renderSidebar() {
+      const navEl = document.getElementById('desktop-nav');
+      navEl.innerHTML = NAV_ITEMS.map(item => {
+        const active = currentView === item.id;
+        return `
+          <button onclick="navigate('${item.id}')"
+            class="w-full flex items-center gap-3.5 px-4 py-3.5 rounded-2xl font-bold text-base transition ${
+              active
+                ? 'bg-emerald-700 text-white shadow-md shadow-emerald-700/20'
+                : 'text-slate-700 hover:bg-emerald-50 hover:text-emerald-800'
+            }">
+            <i data-lucide="${item.icon}" class="w-5 h-5 shrink-0"></i>
+            <span class="truncate">${t(item.labelKey)}</span>
+          </button>
+        `;
+      }).join('');
+
+      // Update mobile bottom nav active states
+      document.querySelectorAll('.mobile-nav-btn').forEach(btn => {
+        const target = btn.getAttribute('data-nav');
+        if (target === currentView) {
+          btn.classList.add('text-emerald-700', 'bg-emerald-50');
+          btn.classList.remove('text-slate-500');
+        } else if (target) {
+          btn.classList.remove('text-emerald-700', 'bg-emerald-50');
+          btn.classList.add('text-slate-500');
+        }
+      });
+
+      // Header Page Title
+      const activeItem = NAV_ITEMS.find(n => n.id === currentView);
+      if (activeItem) {
+        document.getElementById('header-page-title').textContent = t(activeItem.labelKey);
+      }
+      lucide.createIcons();
+    }
+
+    function toggleMobileMoreMenu() {
+      const drawer = document.getElementById('mobile-more-drawer');
+      drawer.classList.toggle('hidden');
+    }
+
+    // =========================================================================
+    // 6. VIEW ROUTER
+    // =========================================================================
+    function renderView() {
+      updateHeaderChrome();
+      const container = document.getElementById('main-view');
+      switch (currentView) {
+        case 'dashboard': renderDashboard(container); break;
+        case 'members': renderMembers(container); break;
+        case 'pattis': renderPattis(container); break;
+        case 'payments': renderPayments(container); break;
+        case 'calculator': renderCalculator(container); break;
+        case 'installments': renderInstallments(container); break;
+        case 'reports': renderReports(container); break;
+        case 'settings': renderSettings(container); break;
+        default: renderDashboard(container);
+      }
+      lucide.createIcons();
+    }
+
+    // =========================================================================
+    // VIEW 1: DASHBOARD (मुख्य पृष्ठ)
+    // =========================================================================
+    function renderDashboard(container) {
+      const activePatti = db.pattis.find(p => p.status === 'active' || p.status === 'demoActive') || db.pattis[0];
+      const totalMembers = db.members.length;
+      const totalPattiAmount = activePatti ? activePatti.totalAmount : 0;
+      const totalCollected = db.payments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
+
+      let totalPending = 0;
+      let paidCount = 0;
+      let partialCount = 0;
+      let unpaidCount = 0;
+      let totalOutstandingAdvances = 0;
+
+      db.members.forEach(m => {
+        const fin = getMemberFinancials(m.id);
+        totalPending += fin.pending;
+        totalOutstandingAdvances += fin.advanceRemaining;
+        if (fin.status === 'paid') paidCount++;
+        else if (fin.status === 'partial') partialCount++;
+        else unpaidCount++;
+      });
+
+      const recentPayments = [...db.payments].reverse().slice(0, 5);
+      const recentWinners = [...db.winners].reverse().slice(0, 4);
+
+      container.innerHTML = `
+        <!-- Quick Action Buttons -->
+        <section class="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200 shadow-xs">
+          <h3 class="text-sm font-extrabold uppercase tracking-wider text-slate-500 mb-3">${t('quickActions')}</h3>
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            <button onclick="navigate('payments')" class="p-3.5 rounded-2xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-sm sm:text-base flex flex-col sm:flex-row items-center justify-center gap-2 shadow-sm transition active:scale-95">
+              <i data-lucide="indian-rupee" class="w-5 h-5"></i>
+              <span>${t('collectPayment')}</span>
+            </button>
+            <button onclick="openMemberModal()" class="p-3.5 rounded-2xl bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 font-bold text-sm sm:text-base flex flex-col sm:flex-row items-center justify-center gap-2 transition active:scale-95">
+              <i data-lucide="user-plus" class="w-5 h-5 text-emerald-700"></i>
+              <span>${t('addMember')}</span>
+            </button>
+            <button onclick="openPattiModal()" class="p-3.5 rounded-2xl bg-blue-50 hover:bg-blue-100 text-blue-900 border border-blue-200 font-bold text-sm sm:text-base flex flex-col sm:flex-row items-center justify-center gap-2 transition active:scale-95">
+              <i data-lucide="plus-circle" class="w-5 h-5 text-blue-700"></i>
+              <span>${t('createNewPatti')}</span>
+            </button>
+            <button onclick="navigate('calculator')" class="p-3.5 rounded-2xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 font-bold text-sm sm:text-base flex flex-col sm:flex-row items-center justify-center gap-2 transition active:scale-95">
+              <i data-lucide="calculator" class="w-5 h-5 text-amber-700"></i>
+              <span>${t('navCalculator')}</span>
+            </button>
+            <button onclick="navigate('reports')" class="col-span-2 sm:col-span-1 p-3.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-900 border border-slate-200 font-bold text-sm sm:text-base flex flex-col sm:flex-row items-center justify-center gap-2 transition active:scale-95">
+              <i data-lucide="file-text" class="w-5 h-5 text-slate-700"></i>
+              <span>${t('viewReports')}</span>
+            </button>
+          </div>
+        </section>
+
+        <!-- 8 Financial Overview Cards -->
+        <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs flex items-center gap-4">
+            <div class="w-14 h-14 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+              <i data-lucide="users" class="w-7 h-7"></i>
+            </div>
+            <div>
+              <p class="text-sm font-semibold text-slate-500">${t('totalMembers')}</p>
+              <p class="text-2xl font-extrabold text-slate-900">${totalMembers}</p>
+            </div>
+          </div>
+
+          <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs flex items-center gap-4">
+            <div class="w-14 h-14 rounded-2xl bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
+              <i data-lucide="landmark" class="w-7 h-7"></i>
+            </div>
+            <div>
+              <p class="text-sm font-semibold text-slate-500">${t('totalPattiAmount')}</p>
+              <p class="text-2xl font-extrabold text-slate-900">${formatINR(totalPattiAmount)}</p>
+            </div>
+          </div>
+
+          <div class="bg-white p-5 rounded-3xl border border-emerald-200 bg-gradient-to-br from-white to-emerald-50/60 shadow-xs flex items-center gap-4">
+            <div class="w-14 h-14 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shrink-0">
+              <i data-lucide="wallet" class="w-7 h-7"></i>
+            </div>
+            <div>
+              <p class="text-sm font-semibold text-emerald-800">${t('totalCollected')}</p>
+              <p class="text-2xl font-extrabold text-emerald-700">${formatINR(totalCollected)}</p>
+            </div>
+          </div>
+
+          <div class="bg-white p-5 rounded-3xl border border-red-200 bg-gradient-to-br from-white to-red-50/50 shadow-xs flex items-center gap-4">
+            <div class="w-14 h-14 rounded-2xl bg-red-100 text-red-700 flex items-center justify-center shrink-0">
+              <i data-lucide="alert-circle" class="w-7 h-7"></i>
+            </div>
+            <div>
+              <p class="text-sm font-semibold text-red-800">${t('totalPending')}</p>
+              <p class="text-2xl font-extrabold text-red-700">${formatINR(totalPending)}</p>
+            </div>
+          </div>
+
+          <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs flex items-center gap-4">
+            <div class="w-14 h-14 rounded-2xl bg-purple-100 text-purple-700 flex items-center justify-center shrink-0">
+              <i data-lucide="calendar" class="w-7 h-7"></i>
+            </div>
+            <div>
+              <p class="text-sm font-semibold text-slate-500">${t('currentMonthInstallment')}</p>
+              <p class="text-xl font-extrabold text-slate-900">${activePatti ? `${t('month')} ${activePatti.currentMonth} / ${activePatti.duration}` : '-'}</p>
+            </div>
+          </div>
+
+          <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs flex items-center gap-4">
+            <div class="w-14 h-14 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+              <i data-lucide="clock" class="w-7 h-7"></i>
+            </div>
+            <div>
+              <p class="text-sm font-semibold text-slate-500">${t('nextPattiDate')}</p>
+              <p class="text-xl font-extrabold text-slate-900">${activePatti ? activePatti.nextDate : '-'}</p>
+            </div>
+          </div>
+
+          <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs flex items-center gap-4">
+            <div class="w-14 h-14 rounded-2xl bg-teal-100 text-teal-700 flex items-center justify-center shrink-0">
+              <i data-lucide="award" class="w-7 h-7"></i>
+            </div>
+            <div class="min-w-0">
+              <p class="text-sm font-semibold text-slate-500">${t('activePatti')}</p>
+              <p class="text-base font-extrabold text-slate-900 truncate">${activePatti ? activePatti.name : '-'}</p>
+            </div>
+          </div>
+
+          <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs flex items-center gap-4">
+            <div class="w-14 h-14 rounded-2xl bg-orange-100 text-orange-700 flex items-center justify-center shrink-0">
+              <i data-lucide="hand-coins" class="w-7 h-7"></i>
+            </div>
+            <div>
+              <p class="text-sm font-semibold text-slate-500">${t('outstandingAdvances')}</p>
+              <p class="text-2xl font-extrabold text-orange-700">${formatINR(totalOutstandingAdvances)}</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Current Patti Summary & Member Status Overview -->
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- Member Payment Status Overview -->
+          <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs space-y-4">
+            <div class="flex items-center justify-between">
+              <h3 class="text-lg font-extrabold text-slate-900">${t('memberPaymentOverview')}</h3>
+              <button onclick="navigate('installments')" class="text-sm font-bold text-emerald-700 hover:underline">${t('navInstallments')} →</button>
+            </div>
+            <div class="grid grid-cols-3 gap-3 text-center">
+              <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200">
+                <p class="text-2xl font-extrabold text-emerald-700">${paidCount}</p>
+                <p class="text-sm font-bold text-emerald-900 mt-1">${t('paid')}</p>
+              </div>
+              <div class="p-4 rounded-2xl bg-amber-50 border border-amber-200">
+                <p class="text-2xl font-extrabold text-amber-700">${partialCount}</p>
+                <p class="text-sm font-bold text-amber-900 mt-1">${t('partial')}</p>
+              </div>
+              <div class="p-4 rounded-2xl bg-red-50 border border-red-200">
+                <p class="text-2xl font-extrabold text-red-700">${unpaidCount}</p>
+                <p class="text-sm font-bold text-red-900 mt-1">${t('unpaid')}</p>
+              </div>
+            </div>
+            ${totalMembers > 0 ? `
+              <div class="w-full h-4 bg-slate-100 rounded-full overflow-hidden flex">
+                <div style="width: ${(paidCount / totalMembers) * 100}%" class="bg-emerald-600 h-full"></div>
+                <div style="width: ${(partialCount / totalMembers) * 100}%" class="bg-amber-500 h-full"></div>
+                <div style="width: ${(unpaidCount / totalMembers) * 100}%" class="bg-red-500 h-full"></div>
+              </div>
+            ` : ''}
+          </div>
+
+          <!-- Current Patti Summary Card -->
+          <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs flex flex-col justify-between space-y-4">
+            <div class="flex items-center justify-between">
+              <h3 class="text-lg font-extrabold text-slate-900">${t('currentPattiSummary')}</h3>
+              <button onclick="navigate('pattis')" class="text-sm font-bold text-emerald-700 hover:underline">${t('winnerDrawTitle')} →</button>
+            </div>
+            ${activePatti ? `
+              <div class="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200 space-y-2">
+                <div class="flex items-center justify-between gap-2">
+                  <span class="font-extrabold text-emerald-950 text-base">${activePatti.name}</span>
+                  <span class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-700 text-white">${t(activePatti.status)}</span>
+                </div>
+                <div class="grid grid-cols-2 gap-2 text-sm pt-2 border-t border-emerald-200/70">
+                  <div><span class="text-slate-600">${t('monthlyContribution')}:</span> <strong class="text-slate-900">${formatINR(activePatti.monthlyInstallment)}</strong></div>
+                  <div><span class="text-slate-600">${t('participantsCount')}:</span> <strong class="text-slate-900">${activePatti.memberIds.length}</strong></div>
+                  <div><span class="text-slate-600">${t('startDate')}:</span> <strong class="text-slate-900">${activePatti.startDate}</strong></div>
+                  <div><span class="text-slate-600">${t('endDate')}:</span> <strong class="text-slate-900">${activePatti.endDate}</strong></div>
+                </div>
+              </div>
+            ` : `<p class="text-slate-500">${t('noRecordsYet')}</p>`}
+          </div>
+        </section>
+
+        <!-- Recent Transactions & Recent Winners -->
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- Recent Payments -->
+          <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs space-y-4">
+            <div class="flex items-center justify-between">
+              <h3 class="text-lg font-extrabold text-slate-900">${t('recentTransactions')}</h3>
+              <button onclick="navigate('payments')" class="text-sm font-bold text-emerald-700 hover:underline">${t('all')} →</button>
+            </div>
+            ${recentPayments.length === 0 ? `<p class="text-slate-500 text-sm">${t('noRecordsYet')}</p>` : `
+              <div class="divide-y divide-slate-100">
+                ${recentPayments.map(p => {
+                  const m = getMemberById(p.memberId);
+                  return `
+                    <div class="py-3 flex items-center justify-between gap-3">
+                      <div class="min-w-0">
+                        <p class="font-bold text-slate-900 truncate">${m ? m.name : p.memberId}</p>
+                        <p class="text-xs text-slate-500">${p.date} • ${t('month')} ${p.month} • <span class="uppercase font-semibold">${p.method}</span></p>
+                      </div>
+                      <div class="text-right shrink-0">
+                        <p class="font-extrabold text-emerald-700">${formatINR(p.amount)}</p>
+                        <button onclick="openReceiptModal('${p.id}')" class="text-xs font-bold text-blue-600 hover:underline">${t('paymentReceipt')}</button>
+                      </div>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            `}
+          </div>
+
+          <!-- Recent Winners -->
+          <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs space-y-4">
+            <div class="flex items-center justify-between">
+              <h3 class="text-lg font-extrabold text-slate-900">${t('recentWinners')}</h3>
+              <button onclick="navigate('pattis')" class="text-sm font-bold text-emerald-700 hover:underline">${t('all')} →</button>
+            </div>
+            ${recentWinners.length === 0 ? `<p class="text-slate-500 text-sm">${t('noRecordsYet')}</p>` : `
+              <div class="divide-y divide-slate-100">
+                ${recentWinners.map(w => {
+                  const m = getMemberById(w.memberId);
+                  return `
+                    <div class="py-3 flex items-center justify-between gap-3">
+                      <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center font-extrabold shrink-0">
+                          #${w.month}
+                        </div>
+                        <div class="min-w-0">
+                          <p class="font-bold text-slate-900 truncate">${m ? m.name : w.memberId}</p>
+                          <p class="text-xs text-slate-500">${w.date} • ${w.mode === 'random' ? t('randomDraw') : t('manualSelect')}</p>
+                        </div>
+                      </div>
+                      <span class="font-extrabold text-emerald-700 shrink-0">${formatINR(w.amount)}</span>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            `}
+          </div>
+        </section>
+      `;
+    }
+
+    // =========================================================================
+    // VIEW 2: MEMBERS MANAGEMENT (सदस्य प्रबंधन)
+    // =========================================================================
+    function renderMembers(container) {
+      const filtered = db.members.filter(m => {
+        const matchesSearch = m.name.toLowerCase().includes(memberSearch.toLowerCase()) ||
+          m.phone.includes(memberSearch) ||
+          m.id.toLowerCase().includes(memberSearch.toLowerCase());
+        if (!matchesSearch) return false;
+        if (memberStatusFilter === 'all') return true;
+        const fin = getMemberFinancials(m.id);
+        return fin.status === memberStatusFilter;
+      });
+
+      container.innerHTML = `
+        <!-- Top Action & Filter Bar -->
+        <div class="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200 shadow-xs space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h2 class="text-xl font-extrabold text-slate-900">${t('memberManagement')} (${db.members.length})</h2>
+            </div>
+            <button onclick="openMemberModal()" class="py-3 px-5 rounded-2xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold flex items-center justify-center gap-2 shadow-sm transition">
+              <i data-lucide="user-plus" class="w-5 h-5"></i>
+              <span>${t('addMember')}</span>
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div class="md:col-span-2 relative">
+              <i data-lucide="search" class="w-5 h-5 text-slate-400 absolute left-3.5 top-3.5"></i>
+              <input type="text" value="${memberSearch}" oninput="memberSearch = this.value; renderView();"
+                placeholder="${t('searchMemberPlaceholder')}"
+                class="w-full pl-11 pr-4 py-3 rounded-2xl border border-slate-300 focus:border-emerald-600 outline-none text-base" />
+            </div>
+            <div>
+              <select onchange="memberStatusFilter = this.value; renderView();"
+                class="w-full py-3 px-4 rounded-2xl border border-slate-300 focus:border-emerald-600 outline-none font-bold text-slate-700 bg-white">
+                <option value="all" ${memberStatusFilter === 'all' ? 'selected' : ''}>${t('status')}: ${t('all')}</option>
+                <option value="paid" ${memberStatusFilter === 'paid' ? 'selected' : ''}>${t('paid')}</option>
+                <option value="partial" ${memberStatusFilter === 'partial' ? 'selected' : ''}>${t('partial')}</option>
+                <option value="unpaid" ${memberStatusFilter === 'unpaid' ? 'selected' : ''}>${t('unpaid')}</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Members Cards Grid (Mobile-First & Desktop Readable) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          ${filtered.length === 0 ? `
+            <div class="col-span-full bg-white rounded-3xl p-8 text-center border border-slate-200 text-slate-500">
+              ${t('noRecordsYet')}
+            </div>
+          ` : filtered.map(m => {
+            const fin = getMemberFinancials(m.id);
+            const badgeClass = fin.status === 'paid'
+              ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
+              : fin.status === 'partial'
+              ? 'bg-amber-100 text-amber-800 border-amber-200'
+              : 'bg-red-100 text-red-800 border-red-200';
+
+            return `
+              <div class="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs hover:border-emerald-300 transition flex flex-col justify-between space-y-4">
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <span class="text-xs font-extrabold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-lg">${m.id}</span>
+                    <h3 class="text-lg font-extrabold text-slate-900 mt-1 truncate">${m.name}</h3>
+                    <p class="text-sm text-slate-600 flex items-center gap-1.5 mt-0.5">
+                      <i data-lucide="phone" class="w-4 h-4 text-slate-400"></i> ${m.phone}
+                    </p>
+                    <p class="text-xs text-slate-500 mt-0.5 truncate">${m.address || '-'}</p>
+                  </div>
+                  <span class="px-3 py-1 rounded-full text-xs font-extrabold border shrink-0 ${badgeClass}">
+                    ${t(fin.status)}
+                  </span>
+                </div>
+
+                <div class="grid grid-cols-3 gap-2 p-3 rounded-2xl bg-slate-50 border border-slate-100 text-center">
+                  <div>
+                    <p class="text-xs text-slate-500">${t('totalPaid')}</p>
+                    <p class="font-extrabold text-emerald-700 text-sm sm:text-base">${formatINR(fin.paid)}</p>
+                  </div>
+                  <div>
+                    <p class="text-xs text-slate-500">${t('pendingAmount')}</p>
+                    <p class="font-extrabold text-red-600 text-sm sm:text-base">${formatINR(fin.pending)}</p>
+                  </div>
+                  <div>
+                    <p class="text-xs text-slate-500">${t('advanceRemaining')}</p>
+                    <p class="font-extrabold text-orange-600 text-sm sm:text-base">${formatINR(fin.advanceRemaining)}</p>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-2 pt-1">
+                  <button onclick="openMemberProfileModal('${m.id}')" class="flex-1 py-2.5 px-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-sm flex items-center justify-center gap-1.5 transition">
+                    <i data-lucide="eye" class="w-4 h-4"></i>
+                    <span>${t('view')}</span>
+                  </button>
+                  <button onclick="openMemberModal('${m.id}')" class="py-2.5 px-3.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm flex items-center justify-center gap-1 transition">
+                    <i data-lucide="pencil" class="w-4 h-4"></i>
+                  </button>
+                  <button onclick="confirmDeleteMember('${m.id}')" class="py-2.5 px-3.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 font-bold text-sm flex items-center justify-center gap-1 transition">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                  </button>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+    }
+
+    function openMemberModal(memberId = null) {
+      const m = memberId ? getMemberById(memberId) : null;
+      const nextNum = 101 + db.members.length;
+      openModal(m ? t('editMember') : t('addMember'), `
+        <form onsubmit="saveMemberForm(event, '${memberId || ''}')" class="space-y-4">
+          <div>
+            <label class="block text-sm font-bold text-slate-700 mb-1">${t('fullName')} *</label>
+            <input id="mem-name" type="text" required value="${m ? m.name : ''}" placeholder="उदा. रामप्रसाद शर्मा / Ramprasad Sharma"
+              class="w-full p-3.5 rounded-2xl border border-slate-300 focus:border-emerald-600 outline-none" />
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-bold text-slate-700 mb-1">${t('mobileNumber')} *</label>
+              <input id="mem-phone" type="tel" required value="${m ? m.phone : ''}" placeholder="9876500099"
+                class="w-full p-3.5 rounded-2xl border border-slate-300 focus:border-emerald-600 outline-none" />
+            </div>
+            <div>
+              <label class="block text-sm font-bold text-slate-700 mb-1">${t('monthlyContribution')} (₹)</label>
+              <input id="mem-contrib" type="number" required value="${m ? m.contribution : 100000}"
+                class="w-full p-3.5 rounded-2xl border border-slate-300 focus:border-emerald-600 outline-none" />
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-bold text-slate-700 mb-1">${t('address')}</label>
+            <input id="mem-address" type="text" value="${m ? m.address : ''}" placeholder="गाँव / वार्ड नंबर"
+              class="w-full p-3.5 rounded-2xl border border-slate-300 focus:border-emerald-600 outline-none" />
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-bold text-slate-700 mb-1">${t('advanceTaken')} (₹)</label>
+              <input id="mem-adv-taken" type="number" min="0" value="${m ? (m.advanceTaken || 0) : 0}"
+                class="w-full p-3.5 rounded-2xl border border-slate-300 focus:border-emerald-600 outline-none" />
+            </div>
+            <div>
+              <label class="block text-sm font-bold text-slate-700 mb-1">${t('alreadyRepaid')} (₹)</label>
+              <input id="mem-adv-repaid" type="number" min="0" value="${m ? (m.advanceRepaid || 0) : 0}"
+                class="w-full p-3.5 rounded-2xl border border-slate-300 focus:border-emerald-600 outline-none" />
+            </div>
+          </div>
+          <div class="flex gap-3 pt-2">
+            <button type="button" onclick="closeModal()" class="flex-1 py-3.5 rounded-2xl bg-slate-100 hover:bg-slate-200 font-bold text-slate-700">${t('cancel')}</button>
+            <button type="submit" class="flex-1 py-3.5 rounded-2xl bg-emerald-700 hover:bg-emerald-800 font-bold text-white shadow-md">${t('save')}</button>
+          </div>
+        </form>
+      `);
+    }
+
+    function saveMemberForm(e, existingId) {
+      e.preventDefault();
+      const name = document.getElementById('mem-name').value.trim();
+      const phone = document.getElementById('mem-phone').value.trim();
+      const contribution = Number(document.getElementById('mem-contrib').value) || 0;
+      const address = document.getElementById('mem-address').value.trim();
+      const advanceTaken = Number(document.getElementById('mem-adv-taken').value) || 0;
+      const advanceRepaid = Number(document.getElementById('mem-adv-repaid').value) || 0;
+
+      if (existingId) {
+        const idx = db.members.findIndex(m => m.id === existingId);
+        if (idx !== -1) {
+          db.members[idx] = { ...db.members[idx], name, phone, contribution, address, advanceTaken, advanceRepaid };
+          logAudit(`Updated Member: ${name} (${existingId})`);
+        }
+      } else {
+        const newId = 'MEM-' + (100 + db.members.length + Math.floor(Math.random() * 90 + 10));
+        db.members.push({ id: newId, name, phone, address, contribution, advanceTaken, advanceRepaid, status: 'active' });
+        // Automatically attach to active Patti if exists
+        if (db.pattis.length > 0) {
+          db.pattis[0].memberIds.push(newId);
+        }
+        logAudit(`Added New Member: ${name} (${newId})`);
+      }
+      saveDB();
+      closeModal();
+      showToast(t('save') + ' ✓');
+      renderView();
+    }
+
+    function confirmDeleteMember(memberId) {
+      const m = getMemberById(memberId);
+      if (!m) return;
+      openModal(t('delete'), `
+        <div class="space-y-4 text-center">
+          <div class="w-16 h-16 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto">
+            <i data-lucide="alert-triangle" class="w-8 h-8"></i>
+          </div>
+          <h4 class="text-lg font-extrabold text-slate-900">${m.name} (${m.id})</h4>
+          <p class="text-slate-600">${t('deleteMemberConfirm')}</p>
+          <div class="flex gap-3 pt-2">
+            <button onclick="closeModal()" class="flex-1 py-3.5 rounded-2xl bg-slate-100 font-bold text-slate-700">${t('cancel')}</button>
+            <button onclick="executeDeleteMember('${memberId}')" class="flex-1 py-3.5 rounded-2xl bg-red-600 hover:bg-red-700 font-bold text-white">${t('delete')}</button>
+          </div>
+        </div>
+      `);
+    }
+
+    function executeDeleteMember(memberId) {
+      const m = getMemberById(memberId);
+      db.members = db.members.filter(x => x.id !== memberId);
+      db.pattis.forEach(p => {
+        p.memberIds = p.memberIds.filter(id => id !== memberId);
+      });
+      logAudit(`Deleted Member: ${m ? m.name : memberId}`);
+      saveDB();
+      closeModal();
+      showToast(t('delete') + ' ✓', 'warning');
+      renderView();
+    }
+
+    function openMemberProfileModal(memberId) {
+      const m = getMemberById(memberId);
+      if (!m) return;
+      const fin = getMemberFinancials(memberId);
+      const payments = db.payments.filter(p => p.memberId === memberId).reverse();
+      const wins = db.winners.filter(w => w.memberId === memberId);
+
+      openModal(t('memberProfile'), `
+        <div class="space-y-5">
+          <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200">
+            <div class="flex justify-between items-start">
+              <div>
+                <span class="text-xs font-extrabold text-emerald-700">${m.id}</span>
+                <h4 class="text-xl font-extrabold text-slate-900">${m.name}</h4>
+                <p class="text-sm text-slate-600">${m.phone} • ${m.address || '-'}</p>
+              </div>
+              <span class="px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-700 text-white">${t(fin.status)}</span>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4 pt-3 border-t border-emerald-200 text-sm">
+              <div><span class="text-slate-500 block text-xs">${t('totalPaid')}</span><strong class="text-emerald-800">${formatINR(fin.paid)}</strong></div>
+              <div><span class="text-slate-500 block text-xs">${t('pendingAmount')}</span><strong class="text-red-600">${formatINR(fin.pending)}</strong></div>
+              <div><span class="text-slate-500 block text-xs">${t('advanceTaken')}</span><strong class="text-slate-900">${formatINR(m.advanceTaken)}</strong></div>
+              <div><span class="text-slate-500 block text-xs">${t('advanceRemaining')}</span><strong class="text-orange-700">${formatINR(fin.advanceRemaining)}</strong></div>
+            </div>
+          </div>
+
+          <div>
+            <h5 class="font-extrabold text-slate-900 mb-2">${t('winnerHistory')}</h5>
+            ${wins.length === 0 ? `<p class="text-sm text-slate-500">${t('noRecordsYet')}</p>` : wins.map(w => `
+              <div class="p-3 rounded-xl bg-amber-50 border border-amber-200 flex justify-between items-center text-sm mb-2">
+                <span><strong>${t('month')} #${w.month}</strong> (${w.date})</span>
+                <strong class="text-emerald-800">${formatINR(w.amount)}</strong>
+              </div>
+            `).join('')}
+          </div>
+
+          <div>
+            <h5 class="font-extrabold text-slate-900 mb-2">${t('paymentHistory')} (${payments.length})</h5>
+            <div class="max-h-60 overflow-y-auto divide-y divide-slate-100 border border-slate-200 rounded-2xl px-3">
+              ${payments.length === 0 ? `<p class="py-4 text-center text-sm text-slate-500">${t('noRecordsYet')}</p>` : payments.map(p => `
+                <div class="py-2.5 flex justify-between items-center text-sm">
+                  <div>
+                    <span class="font-bold">${t('month')} ${p.month}</span> • <span class="text-slate-500">${p.date}</span>
+                    <span class="text-xs block text-slate-500">${p.notes || ''}</span>
+                  </div>
+                  <strong class="text-emerald-700">${formatINR(p.amount)}</strong>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      `);
+    }
+
+    // =========================================================================
+    // VIEW 3: PATTI MANAGEMENT & WINNER LUCKY DRAW (पट्टी और विजेता ड्रॉ)
+    // =========================================================================
+    let selectedPattiForDraw = '';
+
+    function renderPattis(container) {
+      if (!selectedPattiForDraw && db.pattis.length > 0) {
+        selectedPattiForDraw = db.pattis[0].id;
+      }
+      const activeDrawPatti = getPattiById(selectedPattiForDraw) || db.pattis[0];
+
+      // Determine eligible members for draw
+      let eligibleMembers = [];
+      let pastWinnerIds = [];
+      if (activeDrawPatti) {
+        pastWinnerIds = db.winners.filter(w => w.pattiId === activeDrawPatti.id).map(w => w.memberId);
+        eligibleMembers = activeDrawPatti.memberIds
+          .map(id => getMemberById(id))
+          .filter(m => m && (!activeDrawPatti.noDuplicateWinners || !pastWinnerIds.includes(m.id)));
+      }
+
+      container.innerHTML = `
+        <!-- Patti Committees List -->
+        <section class="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <h2 class="text-xl font-extrabold text-slate-900">${t('pattiManagement')}</h2>
+            <button onclick="openPattiModal()" class="py-3 px-5 rounded-2xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold flex items-center justify-center gap-2 shadow-sm transition">
+              <i data-lucide="plus-circle" class="w-5 h-5"></i>
+              <span>${t('createNewPatti')}</span>
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            ${db.pattis.map(p => `
+              <div class="p-5 rounded-2xl border-2 ${selectedPattiForDraw === p.id ? 'border-emerald-600 bg-emerald-50/30' : 'border-slate-200 bg-white'} space-y-3">
+                <div class="flex items-start justify-between gap-2">
+                  <div>
+                    <span class="text-xs font-extrabold text-emerald-700">${p.id}</span>
+                    <h3 class="text-lg font-extrabold text-slate-900">${p.name}</h3>
+                  </div>
+                  <span class="px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-800">${t(p.status)}</span>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm bg-slate-50 p-3 rounded-xl">
+                  <div><span class="text-slate-500 text-xs block">${t('totalPattiAmount')}</span><strong>${formatINR(p.totalAmount)}</strong></div>
+                  <div><span class="text-slate-500 text-xs block">${t('monthlyContribution')}</span><strong>${formatINR(p.monthlyInstallment)}</strong></div>
+                  <div><span class="text-slate-500 text-xs block">${t('participantsCount')}</span><strong>${p.memberIds.length} / ${p.duration} ${t('month')}</strong></div>
+                </div>
+
+                <div class="flex flex-wrap gap-2 pt-1">
+                  <button onclick="selectedPattiForDraw = '${p.id}'; renderView();" class="py-2 px-3.5 rounded-xl bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5">
+                    <i data-lucide="trophy" class="w-4 h-4"></i> ${t('winnerDrawTitle')}
+                  </button>
+                  <button onclick="openPattiParticipantsModal('${p.id}')" class="py-2 px-3.5 rounded-xl bg-blue-50 text-blue-800 border border-blue-200 font-bold text-xs flex items-center gap-1.5">
+                    <i data-lucide="users" class="w-4 h-4"></i> ${t('manageParticipants')}
+                  </button>
+                  <button onclick="openPattiModal('${p.id}')" class="py-2 px-3.5 rounded-xl bg-slate-100 text-slate-800 font-bold text-xs flex items-center gap-1.5">
+                    <i data-lucide="pencil" class="w-4 h-4"></i> ${t('edit')}
+                  </button>
+                  <button onclick="togglePattiStatus('${p.id}')" class="py-2 px-3.5 rounded-xl bg-amber-50 text-amber-800 border border-amber-200 font-bold text-xs">
+                    ${p.status === 'paused' ? t('activatePatti') : t('pausePatti')}
+                  </button>
+                  <button onclick="confirmDeletePatti('${p.id}')" class="py-2 px-3 rounded-xl bg-red-50 text-red-700 font-bold text-xs">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                  </button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </section>
+
+        <!-- Dedicated Winner Selection & Animated Lucky Draw -->
+        ${activeDrawPatti ? `
+          <section class="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200 shadow-xs space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-4">
+              <div>
+                <h3 class="text-xl font-extrabold text-slate-900 flex items-center gap-2">
+                  <i data-lucide="trophy" class="w-6 h-6 text-amber-500"></i>
+                  <span>${t('winnerDrawTitle')}</span>
+                </h3>
+                <p class="text-sm text-slate-600 mt-0.5">${activeDrawPatti.name} • <strong>${t('month')} #${activeDrawPatti.currentMonth}</strong></p>
+              </div>
+              <div class="text-sm font-bold text-emerald-800 bg-emerald-50 px-3.5 py-2 rounded-xl border border-emerald-200">
+                ${t('eligibleMembers')}: ${eligibleMembers.length}
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <!-- Animated Lucky Draw Box -->
+              <div class="p-6 rounded-3xl bg-gradient-to-br from-emerald-50 to-amber-50/60 border-2 border-emerald-200 flex flex-col items-center justify-center text-center space-y-4">
+                <div id="draw-display-box" class="w-full py-6 px-4 rounded-2xl bg-white border-2 border-dashed border-emerald-400 shadow-inner min-h-[110px] flex flex-col items-center justify-center">
+                  <span class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">${t('month')} #${activeDrawPatti.currentMonth}</span>
+                  <p id="draw-slot-name" class="text-xl sm:text-2xl font-extrabold text-emerald-900">
+                    ${eligibleMembers.length > 0 ? '🎲 ' + t('startLuckyDraw') : t('noRecordsYet')}
+                  </p>
+                </div>
+
+                <div class="w-full flex flex-col sm:flex-row gap-3">
+                  <div class="sm:w-1/3">
+                    <label class="block text-xs font-bold text-slate-600 mb-1 text-left">${t('month')} #</label>
+                    <input id="draw-month-input" type="number" min="1" max="${activeDrawPatti.duration}" value="${activeDrawPatti.currentMonth}"
+                      class="w-full p-3 rounded-xl border border-slate-300 font-extrabold text-center bg-white" />
+                  </div>
+                  <button onclick="runAnimatedLuckyDraw('${activeDrawPatti.id}')" ${eligibleMembers.length === 0 ? 'disabled' : ''}
+                    class="sm:w-2/3 py-3.5 px-6 rounded-2xl bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 text-white font-extrabold text-lg shadow-lg shadow-emerald-700/20 flex items-center justify-center gap-2 transition active:scale-95">
+                    <i data-lucide="sparkles" class="w-5 h-5"></i>
+                    <span>${t('startLuckyDraw')}</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Manual Winner Selection (Auditable with Mandatory Reason) -->
+              <form onsubmit="saveManualWinner(event, '${activeDrawPatti.id}')" class="p-5 rounded-3xl bg-slate-50 border border-slate-200 space-y-3">
+                <h4 class="font-extrabold text-slate-900 flex items-center gap-2">
+                  <i data-lucide="user-check" class="w-5 h-5 text-blue-700"></i>
+                  <span>${t('manualWinnerSelect')}</span>
+                </h4>
+                <div>
+                  <label class="block text-xs font-bold text-slate-600 mb-1">${t('selectWinnerMember')} *</label>
+                  <select id="manual-winner-member" required class="w-full p-3 rounded-xl border border-slate-300 bg-white font-bold">
+                    <option value="">-- ${t('selectMember')} --</option>
+                    ${eligibleMembers.map(m => `<option value="${m.id}">${m.name} (${m.id})</option>`).join('')}
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-slate-600 mb-1">${t('manualReason')} *</label>
+                  <input id="manual-winner-reason" type="text" required placeholder="उदा. सदस्य की आपातकालीन आवश्यकता / सर्वसम्मति से"
+                    class="w-full p-3 rounded-xl border border-slate-300 bg-white text-sm" />
+                </div>
+                <button type="submit" class="w-full py-3 rounded-xl bg-blue-700 hover:bg-blue-800 text-white font-bold text-sm transition">
+                  ${t('recordWinnerBtn')}
+                </button>
+              </form>
+            </div>
+
+            <!-- Permanent Draw History Table -->
+            <div class="pt-4 border-t border-slate-200">
+              <h4 class="text-lg font-extrabold text-slate-900 mb-3">${t('drawHistoryTitle')}</h4>
+              <div class="overflow-x-auto rounded-2xl border border-slate-200">
+                <table class="w-full text-left border-collapse text-sm">
+                  <thead class="bg-slate-100 text-slate-700 font-extrabold">
+                    <tr>
+                      <th class="p-3.5">${t('month')}</th>
+                      <th class="p-3.5">${t('fullName')}</th>
+                      <th class="p-3.5">${t('date')}</th>
+                      <th class="p-3.5">${t('selectionMode')}</th>
+                      <th class="p-3.5">${t('notes')}</th>
+                      <th class="p-3.5 text-right">${t('amount')}</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100">
+                    ${db.winners.filter(w => w.pattiId === activeDrawPatti.id).map(w => {
+                      const m = getMemberById(w.memberId);
+                      return `
+                        <tr class="hover:bg-slate-50">
+                          <td class="p-3.5 font-extrabold text-emerald-700">#${w.month}</td>
+                          <td class="p-3.5 font-bold text-slate-900">${m ? m.name : w.memberId}</td>
+                          <td class="p-3.5 text-slate-600">${w.date}</td>
+                          <td class="p-3.5">
+                            <span class="px-2.5 py-1 rounded-lg text-xs font-bold ${w.mode === 'random' ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800'}">
+                              ${w.mode === 'random' ? t('randomDraw') : t('manualSelect')}
+                            </span>
+                          </td>
+                          <td class="p-3.5 text-slate-600">${w.reason || '-'}</td>
+                          <td class="p-3.5 text-right font-extrabold text-slate-900">${formatINR(w.amount)}</td>
+                        </tr>
+                      `;
+                    }).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+        ` : ''}
+      `;
+    }
+
+    function runAnimatedLuckyDraw(pattiId) {
+      const patti = getPattiById(pattiId);
+      if (!patti) return;
+      const pastWinnerIds = db.winners.filter(w => w.pattiId === patti.id).map(w => w.memberId);
+      const eligible = patti.memberIds
+        .map(id => getMemberById(id))
+        .filter(m => m && (!patti.noDuplicateWinners || !pastWinnerIds.includes(m.id)));
+
+      if (eligible.length === 0) {
+        showToast('No eligible members remaining!', 'error');
+        return;
+      }
+
+      const monthNum = Number(document.getElementById('draw-month-input').value) || patti.currentMonth;
+      const box = document.getElementById('draw-display-box');
+      const slot = document.getElementById('draw-slot-name');
+      box.classList.add('animate-draw', 'border-emerald-600');
+
+      let ticks = 0;
+      const maxTicks = 24;
+      const interval = setInterval(() => {
+        const randMember = eligible[Math.floor(Math.random() * eligible.length)];
+        slot.textContent = randMember.name;
+        ticks++;
+        if (ticks >= maxTicks) {
+          clearInterval(interval);
+          box.classList.remove('animate-draw');
+          const finalWinner = eligible[Math.floor(Math.random() * eligible.length)];
+          slot.innerHTML = `🎉 ${finalWinner.name} 🎉`;
+
+          // Save permanent auditable winner record
+          const today = new Date().toISOString().split('T')[0];
+          db.winners.push({
+            id: 'WIN-' + Date.now().toString().slice(-5),
+            pattiId: patti.id,
+            month: monthNum,
+            memberId: finalWinner.id,
+            date: today,
+            mode: 'random',
+            reason: `माह ${monthNum} लकी ड्रॉ विजेता`,
+            amount: patti.totalAmount
+          });
+          logAudit(`Lucky Draw Winner Recorded: ${finalWinner.name} for Month #${monthNum} (${patti.name})`);
+          saveDB();
+          showToast(`${t('winnerAnnouncement')} ${finalWinner.name}`);
+          setTimeout(() => renderView(), 1600);
+        }
+      }, 90);
+    }
+
+    function saveManualWinner(e, pattiId) {
+      e.preventDefault();
+      const patti = getPattiById(pattiId);
+      const memberId = document.getElementById('manual-winner-member').value;
+      const reason = document.getElementById('manual-winner-reason').value.trim();
+      const monthNum = Number(document.getElementById('draw-month-input').value) || patti.currentMonth;
+      if (!memberId || !reason) return;
+
+      const member = getMemberById(memberId);
+      const today = new Date().toISOString().split('T')[0];
+      db.winners.push({
+        id: 'WIN-' + Date.now().toString().slice(-5),
+        pattiId: patti.id,
+        month: monthNum,
+        memberId: memberId,
+        date: today,
+        mode: 'manual',
+        reason: reason,
+        amount: patti.totalAmount
+      });
+      logAudit(`Manual Winner Recorded: ${member ? member.name : memberId} (Reason: ${reason})`);
+      saveDB();
+      showToast(t('recordWinnerBtn') + ' ✓');
+      renderView();
+    }
+
+    function openPattiModal(pattiId = null) {
+      const p = pattiId ? getPattiById(pattiId) : null;
+      openModal(p ? t('edit') : t('createNewPatti'), `
+        <form onsubmit="savePattiForm(event, '${pattiId || ''}')" class="space-y-4">
+          <div>
+            <label class="block text-sm font-bold text-slate-700 mb-1">${t('pattiName')} *</label>
+            <input id="pat-name" type="text" required value="${p ? p.name : ''}" placeholder="उदा. श्री राम पट्टी समूह 2027"
+              class="w-full p-3.5 rounded-2xl border border-slate-300 focus:border-emerald-600 outline-none" />
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label class="block text-sm font-bold text-slate-700 mb-1">${t('totalPattiAmount')} (₹)</label>
+              <input id="pat-total" type="number" required value="${p ? p.totalAmount : db.settings.defaultPattiAmount}"
+                class="w-full p-3.5 rounded-2xl border border-slate-300 outline-none" />
+            </div>
+            <div>
+              <label class="block text-sm font-bold text-slate-700 mb-1">${t('durationMonths')}</label>
+              <input id="pat-duration" type="number" required value="${p ? p.duration : db.settings.defaultDuration}"
+                class="w-full p-3.5 rounded-2xl border border-slate-300 outline-none" />
+            </div>
+            <div>
+              <label class="block text-sm font-bold text-slate-700 mb-1">${t('monthlyContribution')} (₹)</label>
+              <input id="pat-monthly" type="number" required value="${p ? p.monthlyInstallment : 100000}"
+                class="w-full p-3.5 rounded-2xl border border-slate-300 outline-none" />
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label class="block text-sm font-bold text-slate-700 mb-1">${t('startDate')}</label>
+              <input id="pat-start" type="date" required value="${p ? p.startDate : new Date().toISOString().split('T')[0]}"
+                class="w-full p-3.5 rounded-2xl border border-slate-300 outline-none" />
+            </div>
+            <div>
+              <label class="block text-sm font-bold text-slate-700 mb-1">${t('endDate')}</label>
+              <input id="pat-end" type="date" required value="${p ? p.endDate : '2027-12-05'}"
+                class="w-full p-3.5 rounded-2xl border border-slate-300 outline-none" />
+            </div>
+            <div>
+              <label class="block text-sm font-bold text-slate-700 mb-1">${t('currentMonth')}</label>
+              <input id="pat-cur-month" type="number" min="1" required value="${p ? p.currentMonth : 1}"
+                class="w-full p-3.5 rounded-2xl border border-slate-300 outline-none" />
+            </div>
+          </div>
+          <label class="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-200 cursor-pointer">
+            <input id="pat-no-dup" type="checkbox" ${!p || p.noDuplicateWinners ? 'checked' : ''} class="w-5 h-5 accent-emerald-700" />
+            <span class="text-sm font-bold text-slate-800">${t('noDuplicateWinners')}</span>
+          </label>
+          <div class="flex gap-3 pt-2">
+            <button type="button" onclick="closeModal()" class="flex-1 py-3.5 rounded-2xl bg-slate-100 font-bold text-slate-700">${t('cancel')}</button>
+            <button type="submit" class="flex-1 py-3.5 rounded-2xl bg-emerald-700 text-white font-bold shadow-md">${t('save')}</button>
+          </div>
+        </form>
+      `);
+    }
+
+    function savePattiForm(e, existingId) {
+      e.preventDefault();
+      const data = {
+        name: document.getElementById('pat-name').value.trim(),
+        totalAmount: Number(document.getElementById('pat-total').value),
+        duration: Number(document.getElementById('pat-duration').value),
+        monthlyInstallment: Number(document.getElementById('pat-monthly').value),
+        startDate: document.getElementById('pat-start').value,
+        endDate: document.getElementById('pat-end').value,
+        nextDate: document.getElementById('pat-start').value,
+        currentMonth: Number(document.getElementById('pat-cur-month').value),
+        noDuplicateWinners: document.getElementById('pat-no-dup').checked
+      };
+
+      if (existingId) {
+        const idx = db.pattis.findIndex(p => p.id === existingId);
+        if (idx !== -1) {
+          db.pattis[idx] = { ...db.pattis[idx], ...data };
+          logAudit(`Updated Patti: ${data.name}`);
+        }
+      } else {
+        const newPatti = {
+          id: 'PAT-' + Date.now().toString().slice(-5),
+          ...data,
+          status: 'active',
+          memberIds: db.members.map(m => m.id)
+        };
+        db.pattis.unshift(newPatti);
+        selectedPattiForDraw = newPatti.id;
+        logAudit(`Created New Patti: ${data.name}`);
+      }
+      saveDB();
+      closeModal();
+      showToast(t('save') + ' ✓');
+      renderView();
+    }
+
+    function openPattiParticipantsModal(pattiId) {
+      const p = getPattiById(pattiId);
+      if (!p) return;
+      openModal(`${t('manageParticipants')} — ${p.name}`, `
+        <form onsubmit="savePattiParticipants(event, '${pattiId}')" class="space-y-4">
+          <div class="max-h-80 overflow-y-auto divide-y divide-slate-100 border border-slate-200 rounded-2xl p-2">
+            ${db.members.map(m => `
+              <label class="flex items-center justify-between p-3 hover:bg-slate-50 rounded-xl cursor-pointer">
+                <div>
+                  <span class="font-bold text-slate-900 block">${m.name}</span>
+                  <span class="text-xs text-slate-500">${m.id} • ${m.phone}</span>
+                </div>
+                <input type="checkbox" name="pattiMember" value="${m.id}" ${p.memberIds.includes(m.id) ? 'checked' : ''} class="w-5 h-5 accent-emerald-700" />
+              </label>
+            `).join('')}
+          </div>
+          <div class="flex gap-3">
+            <button type="button" onclick="closeModal()" class="flex-1 py-3 rounded-2xl bg-slate-100 font-bold">${t('cancel')}</button>
+            <button type="submit" class="flex-1 py-3 rounded-2xl bg-emerald-700 text-white font-bold">${t('save')}</button>
+          </div>
+        </form>
+      `);
+    }
+
+    function savePattiParticipants(e, pattiId) {
+      e.preventDefault();
+      const p = getPattiById(pattiId);
+      const checked = Array.from(document.querySelectorAll('input[name="pattiMember"]:checked')).map(el => el.value);
+      p.memberIds = checked;
+      logAudit(`Updated Participants (${checked.length}) for Patti: ${p.name}`);
+      saveDB();
+      closeModal();
+      showToast(t('save') + ' ✓');
+      renderView();
+    }
+
+    function togglePattiStatus(pattiId) {
+      const p = getPattiById(pattiId);
+      if (!p) return;
+      p.status = p.status === 'paused' ? 'active' : 'paused';
+      logAudit(`Changed Patti Status to ${p.status}: ${p.name}`);
+      saveDB();
+      renderView();
+    }
+
+    function confirmDeletePatti(pattiId) {
+      const p = getPattiById(pattiId);
+      openModal(t('delete'), `
+        <div class="space-y-4 text-center">
+          <h4 class="font-extrabold text-lg text-slate-900">${p ? p.name : pattiId}</h4>
+          <p class="text-slate-600">${t('deleteMemberConfirm')}</p>
+          <div class="flex gap-3">
+            <button onclick="closeModal()" class="flex-1 py-3 rounded-2xl bg-slate-100 font-bold">${t('cancel')}</button>
+            <button onclick="db.pattis = db.pattis.filter(x => x.id !== '${pattiId}'); saveDB(); closeModal(); renderView();" class="flex-1 py-3 rounded-2xl bg-red-600 text-white font-bold">${t('delete')}</button>
+          </div>
+        </div>
+      `);
+    }
+
+    // =========================================================================
+    // VIEW 4: PAYMENT COLLECTION & RECEIPTS (भुगतान संग्रह)
+    // =========================================================================
+    let showUpiQr = false;
+
+    function renderPayments(container) {
+      const activePatti = db.pattis[0];
+      const today = new Date().toISOString().split('T')[0];
+      const upiUri = `upi://pay?pa=${encodeURIComponent(db.settings.upiId)}&pn=${encodeURIComponent(db.settings.ownerName)}&cu=INR`;
+      const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(upiUri)}`;
+
+      container.innerHTML = `
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <!-- Left Column: UPI Payment Card & Entry Form -->
+          <div class="lg:col-span-6 space-y-6">
+            <!-- UPI Card -->
+            <div class="bg-gradient-to-br from-emerald-800 to-emerald-950 text-white rounded-3xl p-5 sm:p-6 shadow-lg space-y-4">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-extrabold uppercase tracking-wider bg-white/15 px-3 py-1 rounded-full">${t('upiDetailsTitle')}</span>
+                <i data-lucide="qr-code" class="w-6 h-6 text-emerald-200"></i>
+              </div>
+
+              <div class="bg-white/10 rounded-2xl p-4 border border-white/15 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <p class="text-xs text-emerald-200">${t('accountHolder')}: <strong>${db.settings.ownerName}</strong></p>
+                  <p class="text-xl font-extrabold tracking-wide mt-0.5 select-all">${db.settings.upiId}</p>
+                </div>
+                <button onclick="copyUpiToClipboard()" class="py-2.5 px-4 rounded-xl bg-white text-emerald-900 hover:bg-emerald-50 font-extrabold text-sm flex items-center justify-center gap-2 shrink-0 transition active:scale-95">
+                  <i data-lucide="copy" class="w-4 h-4"></i>
+                  <span>${t('copyUpiId')}</span>
+                </button>
+              </div>
+
+              <div class="flex items-center justify-between">
+                <button onclick="showUpiQr = !showUpiQr; renderView();" class="text-sm font-bold text-emerald-200 hover:text-white underline flex items-center gap-1.5">
+                  <i data-lucide="scan-line" class="w-4 h-4"></i>
+                  <span>${t('showHideQr')}</span>
+                </button>
+              </div>
+
+              ${showUpiQr ? `
+                <div class="bg-white p-4 rounded-2xl text-center text-slate-900 space-y-2">
+                  <img src="${qrApiUrl}" alt="UPI QR Code" onerror="this.style.display='none'" class="w-44 h-44 mx-auto rounded-xl border border-slate-200" />
+                  <p class="text-xs font-bold text-slate-600">${db.settings.ownerName} • ${db.settings.upiId}</p>
+                </div>
+              ` : ''}
+
+              <p class="text-xs text-emerald-100/90 leading-relaxed bg-black/20 p-3 rounded-xl">
+                ⚠️ ${t('upiInstruction')}
+              </p>
+            </div>
+
+            <!-- Payment Entry Form -->
+            <form onsubmit="handleRecordPayment(event)" class="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200 shadow-xs space-y-4">
+              <h3 class="text-lg font-extrabold text-slate-900 flex items-center gap-2">
+                <i data-lucide="plus-square" class="w-5 h-5 text-emerald-700"></i>
+                <span>${t('recordNewPayment')}</span>
+              </h3>
+
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-1">${t('selectMember')} *</label>
+                <select id="pay-member" required class="w-full p-3.5 rounded-2xl border border-slate-300 bg-white font-bold">
+                  <option value="">-- ${t('selectMember')} --</option>
+                  ${db.members.map(m => `<option value="${m.id}">${m.name} (${m.id})</option>`).join('')}
+                </select>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-sm font-bold text-slate-700 mb-1">${t('selectPatti')}</label>
+                  <select id="pay-patti" required class="w-full p-3.5 rounded-2xl border border-slate-300 bg-white font-bold">
+                    ${db.pattis.map(p => `<option value="${p.id}">${p.name}</option>`).join('')}
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-sm font-bold text-slate-700 mb-1">${t('month')} #</label>
+                  <input id="pay-month" type="number" min="1" max="36" required value="${activePatti ? activePatti.currentMonth : 1}"
+                    class="w-full p-3.5 rounded-2xl border border-slate-300 font-extrabold" />
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-sm font-bold text-slate-700 mb-1">${t('paymentAmount')} *</label>
+                  <input id="pay-amount" type="number" min="1" required value="${activePatti ? activePatti.monthlyInstallment : 100000}"
+                    class="w-full p-3.5 rounded-2xl border border-slate-300 font-extrabold text-emerald-800 text-lg" />
+                </div>
+                <div>
+                  <label class="block text-sm font-bold text-slate-700 mb-1">${t('paymentMethod')} *</label>
+                  <select id="pay-method" class="w-full p-3.5 rounded-2xl border border-slate-300 bg-white font-bold">
+                    <option value="upi">${t('upi')}</option>
+                    <option value="cash">${t('cash')}</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-sm font-bold text-slate-700 mb-1">${t('paymentDate')} *</label>
+                  <input id="pay-date" type="date" required value="${today}"
+                    class="w-full p-3.5 rounded-2xl border border-slate-300" />
+                </div>
+                <div>
+                  <label class="block text-sm font-bold text-slate-700 mb-1">${t('upiRefId')}</label>
+                  <input id="pay-ref" type="text" placeholder="UTR / Ref No."
+                    class="w-full p-3.5 rounded-2xl border border-slate-300" />
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-1">${t('notes')}</label>
+                <input id="pay-notes" type="text" placeholder="उदा. माह 4 किस्त जमा"
+                  class="w-full p-3.5 rounded-2xl border border-slate-300" />
+              </div>
+
+              <button type="submit" class="w-full py-4 rounded-2xl bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold text-base shadow-md flex items-center justify-center gap-2 transition active:scale-95">
+                <i data-lucide="check-circle" class="w-5 h-5"></i>
+                <span>${t('savePaymentBtn')}</span>
+              </button>
+            </form>
+          </div>
+
+          <!-- Right Column: Payment History & Corrections -->
+          <div class="lg:col-span-6 bg-white rounded-3xl p-5 sm:p-6 border border-slate-200 shadow-xs space-y-4">
+            <h3 class="text-lg font-extrabold text-slate-900">${t('paymentHistory')} (${db.payments.length})</h3>
+            <div class="space-y-3 max-h-[760px] overflow-y-auto pr-1">
+              ${[...db.payments].reverse().map(p => {
+                const m = getMemberById(p.memberId);
+                return `
+                  <div class="p-4 rounded-2xl border border-slate-200 hover:border-emerald-300 transition flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div class="min-w-0">
+                      <div class="flex items-center gap-2">
+                        <span class="text-xs font-extrabold text-slate-500">${p.id}</span>
+                        <span class="px-2 py-0.5 rounded-md text-xs font-bold uppercase ${p.method === 'upi' ? 'bg-purple-100 text-purple-800' : 'bg-emerald-100 text-emerald-800'}">${p.method}</span>
+                      </div>
+                      <h4 class="font-extrabold text-slate-900 truncate mt-0.5">${m ? m.name : p.memberId}</h4>
+                      <p class="text-xs text-slate-500">${p.date} • ${t('month')} #${p.month} ${p.upiRef ? `• Ref: ${p.upiRef}` : ''}</p>
+                      ${p.notes ? `<p class="text-xs text-slate-600 mt-1 italic">"${p.notes}"</p>` : ''}
+                    </div>
+                    <div class="flex sm:flex-col items-center sm:items-end justify-between gap-2 shrink-0">
+                      <span class="text-lg font-extrabold text-emerald-700">${formatINR(p.amount)}</span>
+                      <div class="flex items-center gap-2">
+                        <button onclick="openReceiptModal('${p.id}')" class="px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs flex items-center gap-1">
+                          <i data-lucide="receipt" class="w-3.5 h-3.5"></i> ${t('paymentReceipt')}
+                        </button>
+                        <button onclick="openEditPaymentModal('${p.id}')" class="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs">
+                          <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function copyUpiToClipboard() {
+      const text = db.settings.upiId;
+      const temp = document.createElement('textarea');
+      temp.value = text;
+      document.body.appendChild(temp);
+      temp.select();
+      document.execCommand('copy');
+      document.body.removeChild(temp);
+      showToast(`${t('copied')} (${text})`);
+    }
+
+    function handleRecordPayment(e) {
+      e.preventDefault();
+      const memberId = document.getElementById('pay-member').value;
+      const pattiId = document.getElementById('pay-patti').value;
+      const month = Number(document.getElementById('pay-month').value);
+      const amount = Number(document.getElementById('pay-amount').value);
+      const method = document.getElementById('pay-method').value;
+      const date = document.getElementById('pay-date').value;
+      const upiRef = document.getElementById('pay-ref').value.trim();
+      const notes = document.getElementById('pay-notes').value.trim();
+
+      const newPayId = 'PAY-' + (1000 + db.payments.length + Math.floor(Math.random() * 90 + 10));
+      const member = getMemberById(memberId);
+
+      db.payments.push({
+        id: newPayId,
+        pattiId,
+        memberId,
+        month,
+        amount,
+        method,
+        date,
+        upiRef,
+        notes
+      });
+
+      logAudit(`Recorded Payment ${newPayId}: ${formatINR(amount)} from ${member ? member.name : memberId} (${method.toUpperCase()})`);
+      saveDB();
+      showToast(t('save') + ' ✓');
+      renderView();
+      openReceiptModal(newPayId);
+    }
+
+    function openEditPaymentModal(paymentId) {
+      const p = db.payments.find(x => x.id === paymentId);
+      if (!p) return;
+      openModal(t('editPaymentTitle'), `
+        <form onsubmit="saveEditedPayment(event, '${paymentId}')" class="space-y-4">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-sm font-bold text-slate-700 mb-1">${t('paymentAmount')} (₹)</label>
+              <input id="edit-pay-amt" type="number" required value="${p.amount}" class="w-full p-3 rounded-xl border border-slate-300 font-bold" />
+            </div>
+            <div>
+              <label class="block text-sm font-bold text-slate-700 mb-1">${t('paymentMethod')}</label>
+              <select id="edit-pay-method" class="w-full p-3 rounded-xl border border-slate-300 bg-white font-bold">
+                <option value="upi" ${p.method === 'upi' ? 'selected' : ''}>${t('upi')}</option>
+                <option value="cash" ${p.method === 'cash' ? 'selected' : ''}>${t('cash')}</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-bold text-slate-700 mb-1">${t('paymentDate')}</label>
+            <input id="edit-pay-date" type="date" required value="${p.date}" class="w-full p-3 rounded-xl border border-slate-300" />
+          </div>
+          <div>
+            <label class="block text-sm font-bold text-slate-700 mb-1">${t('notes')}</label>
+            <input id="edit-pay-notes" type="text" value="${p.notes || ''}" class="w-full p-3 rounded-xl border border-slate-300" />
+          </div>
+          <div>
+            <label class="block text-sm font-bold text-red-700 mb-1">${t('correctionReason')} *</label>
+            <input id="edit-pay-reason" type="text" required placeholder="उदा. राशि सुधार / गलत प्रविष्टि" class="w-full p-3 rounded-xl border border-red-300 bg-red-50/30" />
+          </div>
+          <div class="flex gap-3 pt-2">
+            <button type="button" onclick="closeModal()" class="flex-1 py-3 rounded-xl bg-slate-100 font-bold">${t('cancel')}</button>
+            <button type="submit" class="flex-1 py-3 rounded-xl bg-emerald-700 text-white font-bold">${t('save')}</button>
+          </div>
+        </form>
+      `);
+    }
+
+    function saveEditedPayment(e, paymentId) {
+      e.preventDefault();
+      const idx = db.payments.findIndex(x => x.id === paymentId);
+      if (idx === -1) return;
+      const oldAmt = db.payments[idx].amount;
+      const newAmt = Number(document.getElementById('edit-pay-amt').value);
+      const method = document.getElementById('edit-pay-method').value;
+      const date = document.getElementById('edit-pay-date').value;
+      const notes = document.getElementById('edit-pay-notes').value.trim();
+      const reason = document.getElementById('edit-pay-reason').value.trim();
+
+      db.payments[idx] = { ...db.payments[idx], amount: newAmt, method, date, notes };
+      logAudit(`Edited Payment ${paymentId}: ${formatINR(oldAmt)} -> ${formatINR(newAmt)} | Reason: ${reason}`);
+      saveDB();
+      closeModal();
+      showToast(t('save') + ' ✓');
+      renderView();
+    }
+
+    function openReceiptModal(paymentId) {
+      const p = db.payments.find(x => x.id === paymentId);
+      if (!p) return;
+      const m = getMemberById(p.memberId);
+      const patti = getPattiById(p.pattiId);
+
+      const receiptHtml = `
+        <div id="receipt-card" class="border-2 border-emerald-700 rounded-2xl p-6 bg-white space-y-4">
+          <div class="text-center border-b-2 border-dashed border-slate-200 pb-4">
+            <h3 class="text-xl font-extrabold text-emerald-800">${db.settings.ownerName}</h3>
+            <p class="text-xs font-bold text-slate-500">${t('appTitle')} • UPI: ${db.settings.upiId}</p>
+            <span class="inline-block mt-2 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 font-extrabold text-xs">${t('paymentReceipt')}</span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 text-sm">
+            <div><span class="text-slate-500 block text-xs">${t('receiptNo')}</span><strong class="text-slate-900">${p.id}</strong></div>
+            <div class="text-right"><span class="text-slate-500 block text-xs">${t('paymentDate')}</span><strong class="text-slate-900">${p.date}</strong></div>
+            <div class="col-span-2"><span class="text-slate-500 block text-xs">${t('receivedFrom')}</span><strong class="text-base text-slate-900">${m ? m.name : p.memberId} (${m ? m.phone : ''})</strong></div>
+            <div><span class="text-slate-500 block text-xs">${t('selectPatti')}</span><strong class="text-slate-800">${patti ? patti.name : p.pattiId}</strong></div>
+            <div class="text-right"><span class="text-slate-500 block text-xs">${t('month')} #</span><strong class="text-slate-800">${p.month}</strong></div>
+            <div><span class="text-slate-500 block text-xs">${t('paymentMethod')}</span><strong class="uppercase text-slate-800">${p.method} ${p.upiRef ? `(${p.upiRef})` : ''}</strong></div>
+            <div class="text-right"><span class="text-slate-500 block text-xs">${t('receivedBy')}</span><strong class="text-slate-800">${db.settings.ownerName}</strong></div>
+          </div>
+
+          <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-between">
+            <span class="font-bold text-emerald-900">${t('paymentAmount')}</span>
+            <span class="text-2xl font-extrabold text-emerald-800">${formatINR(p.amount)}</span>
+          </div>
+
+          ${p.notes ? `<p class="text-xs text-slate-600"><strong>${t('notes')}:</strong> ${p.notes}</p>` : ''}
+          <p class="text-center text-xs text-slate-400 pt-2 border-t border-slate-100">${t('thankYouReceipt')}</p>
+        </div>
+        <div class="flex gap-3 pt-2">
+          <button onclick="printElement('receipt-card')" class="flex-1 py-3.5 rounded-2xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold flex items-center justify-center gap-2">
+            <i data-lucide="printer" class="w-5 h-5"></i>
+            <span>${t('print')}</span>
+          </button>
+          <button onclick="closeModal()" class="py-3.5 px-6 rounded-2xl bg-slate-100 font-bold text-slate-700">${t('close')}</button>
+        </div>
+      `;
+      openModal(t('paymentReceipt'), receiptHtml);
+    }
+
+    // =========================================================================
+    // VIEW 5: ADVANCE CALCULATOR & LEDGER (एडवांस कैलकुलेटर)
+    // =========================================================================
+    let calcState = {
+      memberId: '',
+      amount: 30000,
+      months: 10,
+      mode: 'none', // none | flat | reducing
+      rate: 12,
+      startDate: new Date().toISOString().split('T')[0],
+      alreadyRepaid: 0
+    };
+
+    function renderCalculator(container) {
+      const P = Math.max(0, Number(calcState.amount) || 0);
+      const N = Math.max(1, Number(calcState.months) || 1);
+      const annualRate = Math.max(0, Number(calcState.rate) || 0);
+      const repaid = Math.max(0, Number(calcState.alreadyRepaid) || 0);
+
+      let monthlyEmi = 0;
+      let totalInterest = 0;
+      let totalRepayment = 0;
+      const schedule = [];
+
+      if (calcState.mode === 'none' || annualRate === 0) {
+        totalInterest = 0;
+        totalRepayment = P;
+        monthlyEmi = P / N;
+        let bal = P;
+        for (let i = 1; i <= N; i++) {
+          const prin = P / N;
+          bal = Math.max(0, bal - prin);
+          schedule.push({ month: i, emi: prin, principal: prin, interest: 0, balance: bal });
+        }
+      } else if (calcState.mode === 'flat') {
+        totalInterest = P * (annualRate / 100) * (N / 12);
+        totalRepayment = P + totalInterest;
+        monthlyEmi = totalRepayment / N;
+        let bal = totalRepayment;
+        for (let i = 1; i <= N; i++) {
+          bal = Math.max(0, bal - monthlyEmi);
+          schedule.push({ month: i, emi: monthlyEmi, principal: P / N, interest: totalInterest / N, balance: bal });
+        }
+      } else {
+        // Reducing balance EMI
+        const r = annualRate / 12 / 100;
+        monthlyEmi = (P * r * Math.pow(1 + r, N)) / (Math.pow(1 + r, N) - 1);
+        totalRepayment = monthlyEmi * N;
+        totalInterest = totalRepayment - P;
+        let bal = P;
+        for (let i = 1; i <= N; i++) {
+          const intPart = bal * r;
+          const prinPart = monthlyEmi - intPart;
+          bal = Math.max(0, bal - prinPart);
+          schedule.push({ month: i, emi: monthlyEmi, principal: prinPart, interest: intPart, balance: bal });
+        }
+      }
+
+      const remainingBalance = Math.max(0, totalRepayment - repaid);
+      const startObj = new Date(calcState.startDate || new Date());
+      startObj.setMonth(startObj.getMonth() + N);
+      const completionDateStr = isNaN(startObj.getTime()) ? '-' : startObj.toISOString().split('T')[0];
+
+      container.innerHTML = `
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <!-- Inputs -->
+          <div class="lg:col-span-5 bg-white rounded-3xl p-5 sm:p-6 border border-slate-200 shadow-xs space-y-4">
+            <h2 class="text-xl font-extrabold text-slate-900 flex items-center gap-2">
+              <i data-lucide="calculator" class="w-6 h-6 text-emerald-700"></i>
+              <span>${t('advanceCalculatorTitle')}</span>
+            </h2>
+
+            <div>
+              <label class="block text-sm font-bold text-slate-700 mb-1">${t('selectMember')} (${t('all')})</label>
+              <select onchange="calcState.memberId = this.value;" class="w-full p-3.5 rounded-2xl border border-slate-300 bg-white font-bold">
+                <option value="">-- ${t('selectMember')} --</option>
+                ${db.members.map(m => `<option value="${m.id}" ${calcState.memberId === m.id ? 'selected' : ''}>${m.name} (${m.id})</option>`).join('')}
+              </select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-1">${t('advanceAmount')}</label>
+                <input type="number" min="0" value="${calcState.amount}" oninput="calcState.amount = this.value; renderView();"
+                  class="w-full p-3.5 rounded-2xl border border-slate-300 font-extrabold text-lg text-emerald-800" />
+              </div>
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-1">${t('repaymentDuration')}</label>
+                <input type="number" min="1" max="60" value="${calcState.months}" oninput="calcState.months = this.value; renderView();"
+                  class="w-full p-3.5 rounded-2xl border border-slate-300 font-extrabold text-lg" />
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-bold text-slate-700 mb-1">${t('interestMode')}</label>
+              <select onchange="calcState.mode = this.value; renderView();" class="w-full p-3.5 rounded-2xl border border-slate-300 bg-white font-bold">
+                <option value="none" ${calcState.mode === 'none' ? 'selected' : ''}>${t('noInterest')}</option>
+                <option value="flat" ${calcState.mode === 'flat' ? 'selected' : ''}>${t('flatInterest')}</option>
+                <option value="reducing" ${calcState.mode === 'reducing' ? 'selected' : ''}>${t('reducingInterest')}</option>
+              </select>
+            </div>
+
+            ${calcState.mode !== 'none' ? `
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-1">${t('interestRate')}</label>
+                <input type="number" step="0.5" min="0" value="${calcState.rate}" oninput="calcState.rate = this.value; renderView();"
+                  class="w-full p-3.5 rounded-2xl border border-slate-300 font-bold" />
+              </div>
+            ` : ''}
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-1">${t('startDate')}</label>
+                <input type="date" value="${calcState.startDate}" onchange="calcState.startDate = this.value; renderView();"
+                  class="w-full p-3.5 rounded-2xl border border-slate-300" />
+              </div>
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-1">${t('alreadyRepaid')}</label>
+                <input type="number" min="0" value="${calcState.alreadyRepaid}" oninput="calcState.alreadyRepaid = this.value; renderView();"
+                  class="w-full p-3.5 rounded-2xl border border-slate-300 font-bold" />
+              </div>
+            </div>
+
+            <button onclick="applyCalculatedAdvanceToMember(${Math.round(totalRepayment)}, ${repaid})"
+              class="w-full py-3.5 px-4 rounded-2xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold shadow-sm flex items-center justify-center gap-2 transition">
+              <i data-lucide="save" class="w-5 h-5"></i>
+              <span>${t('saveAdvanceToMember')}</span>
+            </button>
+          </div>
+
+          <!-- Results & Schedule -->
+          <div class="lg:col-span-7 space-y-6">
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <div class="p-4 rounded-3xl bg-emerald-700 text-white shadow-sm">
+                <span class="text-xs text-emerald-100 block">${t('monthlyInstallment')}</span>
+                <strong class="text-2xl font-extrabold">${formatINR(Math.round(monthlyEmi))}</strong>
+              </div>
+              <div class="p-4 rounded-3xl bg-white border border-slate-200">
+                <span class="text-xs text-slate-500 block">${t('totalInterest')}</span>
+                <strong class="text-xl font-extrabold text-amber-700">${formatINR(Math.round(totalInterest))}</strong>
+              </div>
+              <div class="p-4 rounded-3xl bg-white border border-slate-200">
+                <span class="text-xs text-slate-500 block">${t('totalRepayment')}</span>
+                <strong class="text-xl font-extrabold text-slate-900">${formatINR(Math.round(totalRepayment))}</strong>
+              </div>
+              <div class="p-4 rounded-3xl bg-white border border-slate-200">
+                <span class="text-xs text-slate-500 block">${t('remainingBalance')}</span>
+                <strong class="text-xl font-extrabold text-red-600">${formatINR(Math.round(remainingBalance))}</strong>
+              </div>
+              <div class="col-span-2 p-4 rounded-3xl bg-white border border-slate-200">
+                <span class="text-xs text-slate-500 block">${t('completionDate')}</span>
+                <strong class="text-lg font-extrabold text-slate-900">${completionDateStr} (${N} ${t('month')})</strong>
+              </div>
+            </div>
+
+            <!-- Schedule Table -->
+            <div class="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs">
+              <h3 class="font-extrabold text-slate-900 mb-3">${t('repaymentSchedule')}</h3>
+              <div class="max-h-96 overflow-y-auto rounded-2xl border border-slate-200">
+                <table class="w-full text-left border-collapse text-sm">
+                  <thead class="bg-slate-100 font-extrabold text-slate-700 sticky top-0">
+                    <tr>
+                      <th class="p-3">${t('month')}</th>
+                      <th class="p-3">${t('monthlyInstallment')}</th>
+                      <th class="p-3">${t('totalInterest')}</th>
+                      <th class="p-3 text-right">${t('remainingBalance')}</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100">
+                    ${schedule.map(row => `
+                      <tr>
+                        <td class="p-3 font-bold">#${row.month}</td>
+                        <td class="p-3 font-extrabold text-emerald-700">${formatINR(Math.round(row.emi))}</td>
+                        <td class="p-3 text-slate-600">${formatINR(Math.round(row.interest))}</td>
+                        <td class="p-3 text-right font-bold text-slate-800">${formatINR(Math.round(row.balance))}</td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function applyCalculatedAdvanceToMember(totalRepayable, repaidAmt) {
+      if (!calcState.memberId) {
+        showToast(t('selectMember'), 'error');
+        return;
+      }
+      const m = getMemberById(calcState.memberId);
+      if (!m) return;
+      m.advanceTaken = (Number(m.advanceTaken) || 0) + totalRepayable;
+      m.advanceRepaid = (Number(m.advanceRepaid) || 0) + repaidAmt;
+      logAudit(`Added Advance ${formatINR(totalRepayable)} to ${m.name}`);
+      saveDB();
+      showToast(t('save') + ' ✓');
+    }
+
+    // =========================================================================
+    // VIEW 6: INSTALLMENT TRACKER (किस्त ट्रैकर)
+    // =========================================================================
+    function renderInstallments(container) {
+      if (!installmentPattiFilter && db.pattis.length > 0) {
+        installmentPattiFilter = db.pattis[0].id;
+      }
+      const patti = getPattiById(installmentPattiFilter) || db.pattis[0];
+      const monthNum = Number(installmentMonthFilter) || (patti ? patti.currentMonth : 1);
+
+      if (!patti) {
+        container.innerHTML = `<div class="bg-white p-8 rounded-3xl text-center">${t('noRecordsYet')}</div>`;
+        return;
+      }
+
+      const monthWinner = db.winners.find(w => w.pattiId === patti.id && Number(w.month) === monthNum);
+      const winnerMember = monthWinner ? getMemberById(monthWinner.memberId) : null;
+
+      const rows = patti.memberIds.map(mId => {
+        const m = getMemberById(mId);
+        if (!m) return null;
+        const overrideKey = `${patti.id}_${monthNum}_${mId}`;
+        const ov = db.installmentOverrides[overrideKey] || {};
+        const dueDate = ov.dueDate || `${patti.startDate.slice(0, 8)}05`;
+        const amountDue = ov.amountDue !== undefined ? Number(ov.amountDue) : patti.monthlyInstallment;
+
+        const paidForMonth = db.payments
+          .filter(p => p.pattiId === patti.id && p.memberId === mId && Number(p.month) === monthNum)
+          .reduce((s, p) => s + Number(p.amount), 0);
+
+        const remaining = Math.max(0, amountDue - paidForMonth);
+        let status = 'unpaid';
+        if (paidForMonth >= amountDue) status = 'paid';
+        else if (paidForMonth > 0) status = 'partial';
+
+        return { m, dueDate, amountDue, paidForMonth, remaining, status, notes: ov.notes || '' };
+      }).filter(Boolean).filter(r => installmentStatusFilter === 'all' || r.status === installmentStatusFilter);
+
+      container.innerHTML = `
+        <div class="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <h2 class="text-xl font-extrabold text-slate-900">${t('installmentTrackerTitle')}</h2>
+            ${winnerMember ? `
+              <div class="px-3.5 py-2 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-sm font-bold flex items-center gap-2">
+                <i data-lucide="trophy" class="w-4 h-4 text-amber-600"></i>
+                <span>${t('month')} #${monthNum} ${t('recentWinners')}: <strong>${winnerMember.name}</strong></span>
+              </div>
+            ` : ''}
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-slate-500 mb-1">${t('selectPatti')}</label>
+              <select onchange="installmentPattiFilter = this.value; renderView();" class="w-full p-3 rounded-2xl border border-slate-300 bg-white font-bold">
+                ${db.pattis.map(p => `<option value="${p.id}" ${p.id === patti.id ? 'selected' : ''}>${p.name}</option>`).join('')}
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-500 mb-1">${t('month')} #</label>
+              <select onchange="installmentMonthFilter = this.value; renderView();" class="w-full p-3 rounded-2xl border border-slate-300 bg-white font-bold">
+                ${Array.from({ length: patti.duration }, (_, i) => i + 1).map(mo => `
+                  <option value="${mo}" ${mo === monthNum ? 'selected' : ''}>${t('month')} #${mo}</option>
+                `).join('')}
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-500 mb-1">${t('status')}</label>
+              <select onchange="installmentStatusFilter = this.value; renderView();" class="w-full p-3 rounded-2xl border border-slate-300 bg-white font-bold">
+                <option value="all" ${installmentStatusFilter === 'all' ? 'selected' : ''}>${t('all')}</option>
+                <option value="paid" ${installmentStatusFilter === 'paid' ? 'selected' : ''}>${t('paid')}</option>
+                <option value="partial" ${installmentStatusFilter === 'partial' ? 'selected' : ''}>${t('partial')}</option>
+                <option value="unpaid" ${installmentStatusFilter === 'unpaid' ? 'selected' : ''}>${t('unpaid')}</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-sm">
+              <thead class="bg-slate-100 text-slate-700 font-extrabold">
+                <tr>
+                  <th class="p-4">${t('fullName')}</th>
+                  <th class="p-4">${t('dueDate')}</th>
+                  <th class="p-4">${t('amountDue')}</th>
+                  <th class="p-4">${t('amountCollected')}</th>
+                  <th class="p-4">${t('remainingBalance')}</th>
+                  <th class="p-4">${t('status')}</th>
+                  <th class="p-4 text-right">${t('actions')}</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                ${rows.map(r => {
+                  const badge = r.status === 'paid'
+                    ? 'bg-emerald-100 text-emerald-800'
+                    : r.status === 'partial'
+                    ? 'bg-amber-100 text-amber-800'
+                    : 'bg-red-100 text-red-800';
+                  return `
+                    <tr class="hover:bg-slate-50">
+                      <td class="p-4">
+                        <span class="font-extrabold text-slate-900 block">${r.m.name}</span>
+                        <span class="text-xs text-slate-500">${r.m.phone}</span>
+                      </td>
+                      <td class="p-4 text-slate-600">${r.dueDate}</td>
+                      <td class="p-4 font-bold">${formatINR(r.amountDue)}</td>
+                      <td class="p-4 font-extrabold text-emerald-700">${formatINR(r.paidForMonth)}</td>
+                      <td class="p-4 font-extrabold text-red-600">${formatINR(r.remaining)}</td>
+                      <td class="p-4"><span class="px-3 py-1 rounded-full text-xs font-extrabold ${badge}">${t(r.status)}</span></td>
+                      <td class="p-4 text-right space-x-1.5 whitespace-nowrap">
+                        ${r.remaining > 0 ? `
+                          <button onclick="quickPayInstallment('${patti.id}', '${r.m.id}', ${monthNum}, ${r.remaining})"
+                            class="px-3 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs">
+                            ${t('markPaid')}
+                          </button>
+                        ` : ''}
+                        <button onclick="openEditInstallmentModal('${patti.id}', '${r.m.id}', ${monthNum}, '${r.dueDate}', ${r.amountDue})"
+                          class="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs">
+                          <i data-lucide="pencil" class="w-3.5 h-3.5 inline"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    function quickPayInstallment(pattiId, memberId, monthNum, remainingAmount) {
+      const m = getMemberById(memberId);
+      const today = new Date().toISOString().split('T')[0];
+      const newPayId = 'PAY-' + (1000 + db.payments.length + Math.floor(Math.random() * 90 + 10));
+      db.payments.push({
+        id: newPayId,
+        pattiId,
+        memberId,
+        month: monthNum,
+        amount: remainingAmount,
+        method: 'cash',
+        date: today,
+        upiRef: '',
+        notes: `माह ${monthNum} किस्त जमा`
+      });
+      logAudit(`Marked Installment Paid: ${formatINR(remainingAmount)} for ${m ? m.name : memberId} (Month #${monthNum})`);
+      saveDB();
+      showToast(t('paid') + ' ✓');
+      renderView();
+    }
+
+    function openEditInstallmentModal(pattiId, memberId, monthNum, dueDate, amountDue) {
+      openModal(`${t('edit')} — ${t('month')} #${monthNum}`, `
+        <form onsubmit="saveInstallmentOverride(event, '${pattiId}', '${memberId}', ${monthNum})" class="space-y-4">
+          <div>
+            <label class="block text-sm font-bold text-slate-700 mb-1">${t('dueDate')}</label>
+            <input id="ov-date" type="date" value="${dueDate}" class="w-full p-3 rounded-xl border border-slate-300" />
+          </div>
+          <div>
+            <label class="block text-sm font-bold text-slate-700 mb-1">${t('amountDue')} (₹)</label>
+            <input id="ov-amt" type="number" value="${amountDue}" class="w-full p-3 rounded-xl border border-slate-300 font-bold" />
+          </div>
+          <div class="flex gap-3">
+            <button type="button" onclick="closeModal()" class="flex-1 py-3 rounded-xl bg-slate-100 font-bold">${t('cancel')}</button>
+            <button type="submit" class="flex-1 py-3 rounded-xl bg-emerald-700 text-white font-bold">${t('save')}</button>
+          </div>
+        </form>
+      `);
+    }
+
+    function saveInstallmentOverride(e, pattiId, memberId, monthNum) {
+      e.preventDefault();
+      const key = `${pattiId}_${monthNum}_${memberId}`;
+      db.installmentOverrides[key] = {
+        dueDate: document.getElementById('ov-date').value,
+        amountDue: Number(document.getElementById('ov-amt').value)
+      };
+      logAudit(`Edited Installment Schedule (${key})`);
+      saveDB();
+      closeModal();
+      showToast(t('save') + ' ✓');
+      renderView();
+    }
+
+    // =========================================================================
+    // VIEW 7: REPORTS & FINANCIAL LEDGER (रिपोर्ट और खाता बही)
+    // =========================================================================
+    function renderReports(container) {
+      const tabs = [
+        { id: 'monthly', label: t('reportMonthly') },
+        { id: 'memberLedger', label: t('reportMemberLedger') },
+        { id: 'pending', label: t('reportPending') },
+        { id: 'advances', label: t('reportAdvances') },
+        { id: 'winners', label: t('reportWinners') },
+        { id: 'audit', label: t('reportAudit') }
+      ];
+
+      let reportTableHtml = '';
+
+      if (activeReportTab === 'monthly') {
+        const filteredPays = db.payments.filter(p =>
+          (reportMemberFilter === 'all' || p.memberId === reportMemberFilter) &&
+          (reportMethodFilter === 'all' || p.method === reportMethodFilter)
+        );
+        const totalSum = filteredPays.reduce((s, p) => s + Number(p.amount), 0);
+        reportTableHtml = `
+          <div class="mb-3 p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 flex justify-between items-center">
+            <span class="font-bold text-emerald-900">${t('totalCollected')} (${filteredPays.length})</span>
+            <strong class="text-xl font-extrabold text-emerald-800">${formatINR(totalSum)}</strong>
+          </div>
+          <table id="report-data-table" class="w-full text-left border-collapse text-sm">
+            <thead class="bg-slate-100 font-extrabold text-slate-700">
+              <tr>
+                <th class="p-3">ID</th>
+                <th class="p-3">${t('date')}</th>
+                <th class="p-3">${t('fullName')}</th>
+                <th class="p-3">${t('month')}</th>
+                <th class="p-3">${t('paymentMethod')}</th>
+                <th class="p-3 text-right">${t('amount')}</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              ${[...filteredPays].reverse().map(p => {
+                const m = getMemberById(p.memberId);
+                return `
+                  <tr>
+                    <td class="p-3 font-bold">${p.id}</td>
+                    <td class="p-3">${p.date}</td>
+                    <td class="p-3 font-bold">${m ? m.name : p.memberId}</td>
+                    <td class="p-3">#${p.month}</td>
+                    <td class="p-3 uppercase">${p.method}</td>
+                    <td class="p-3 text-right font-extrabold text-emerald-700">${formatINR(p.amount)}</td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        `;
+      } else if (activeReportTab === 'memberLedger' || activeReportTab === 'pending') {
+        const list = db.members.map(m => ({ m, fin: getMemberFinancials(m.id) }))
+          .filter(x => activeReportTab !== 'pending' || x.fin.pending > 0);
+        reportTableHtml = `
+          <table id="report-data-table" class="w-full text-left border-collapse text-sm">
+            <thead class="bg-slate-100 font-extrabold text-slate-700">
+              <tr>
+                <th class="p-3">${t('memberId')}</th>
+                <th class="p-3">${t('fullName')}</th>
+                <th class="p-3">${t('mobileNumber')}</th>
+                <th class="p-3 text-right">${t('totalPaid')}</th>
+                <th class="p-3 text-right">${t('pendingAmount')}</th>
+                <th class="p-3">${t('status')}</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              ${list.map(({ m, fin }) => `
+                <tr>
+                  <td class="p-3 font-bold">${m.id}</td>
+                  <td class="p-3 font-bold">${m.name}</td>
+                  <td class="p-3">${m.phone}</td>
+                  <td class="p-3 text-right font-extrabold text-emerald-700">${formatINR(fin.paid)}</td>
+                  <td class="p-3 text-right font-extrabold text-red-600">${formatINR(fin.pending)}</td>
+                  <td class="p-3 font-bold">${t(fin.status)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+      } else if (activeReportTab === 'advances') {
+        const advMembers = db.members.filter(m => Number(m.advanceTaken) > 0);
+        reportTableHtml = `
+          <table id="report-data-table" class="w-full text-left border-collapse text-sm">
+            <thead class="bg-slate-100 font-extrabold text-slate-700">
+              <tr>
+                <th class="p-3">${t('fullName')}</th>
+                <th class="p-3 text-right">${t('advanceTaken')}</th>
+                <th class="p-3 text-right">${t('alreadyRepaid')}</th>
+                <th class="p-3 text-right">${t('advanceRemaining')}</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              ${advMembers.map(m => `
+                <tr>
+                  <td class="p-3 font-bold">${m.name}</td>
+                  <td class="p-3 text-right font-bold">${formatINR(m.advanceTaken)}</td>
+                  <td class="p-3 text-right text-emerald-700 font-bold">${formatINR(m.advanceRepaid)}</td>
+                  <td class="p-3 text-right text-orange-700 font-extrabold">${formatINR(Math.max(0, m.advanceTaken - m.advanceRepaid))}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+      } else if (activeReportTab === 'winners') {
+        reportTableHtml = `
+          <table id="report-data-table" class="w-full text-left border-collapse text-sm">
+            <thead class="bg-slate-100 font-extrabold text-slate-700">
+              <tr>
+                <th class="p-3">${t('month')}</th>
+                <th class="p-3">${t('fullName')}</th>
+                <th class="p-3">${t('date')}</th>
+                <th class="p-3">${t('selectionMode')}</th>
+                <th class="p-3 text-right">${t('amount')}</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              ${db.winners.map(w => {
+                const m = getMemberById(w.memberId);
+                return `
+                  <tr>
+                    <td class="p-3 font-bold">#${w.month}</td>
+                    <td class="p-3 font-bold">${m ? m.name : w.memberId}</td>
+                    <td class="p-3">${w.date}</td>
+                    <td class="p-3">${w.mode === 'random' ? t('randomDraw') : t('manualSelect')}</td>
+                    <td class="p-3 text-right font-extrabold text-emerald-700">${formatINR(w.amount)}</td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        `;
+      } else {
+        reportTableHtml = `
+          <table id="report-data-table" class="w-full text-left border-collapse text-sm">
+            <thead class="bg-slate-100 font-extrabold text-slate-700">
+              <tr>
+                <th class="p-3">${t('date')}</th>
+                <th class="p-3">${t('actions')}</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              ${db.auditLog.map(a => `
+                <tr>
+                  <td class="p-3 text-slate-500 whitespace-nowrap">${a.timestamp}</td>
+                  <td class="p-3 font-semibold text-slate-800">${a.action}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+      }
+
+      container.innerHTML = `
+        <div class="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <h2 class="text-xl font-extrabold text-slate-900">${t('reportsTitle')}</h2>
+            <div class="flex gap-2">
+              <button onclick="exportCurrentReportCSV()" class="py-2.5 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-sm flex items-center gap-1.5">
+                <i data-lucide="download" class="w-4 h-4"></i>
+                <span>${t('exportCsv')}</span>
+              </button>
+              <button onclick="printElement('printable-report-box')" class="py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-sm flex items-center gap-1.5">
+                <i data-lucide="printer" class="w-4 h-4"></i>
+                <span>${t('print')}</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Report Tabs -->
+          <div class="flex gap-2 overflow-x-auto pb-1">
+            ${tabs.map(tab => `
+              <button onclick="activeReportTab = '${tab.id}'; renderView();"
+                class="px-4 py-2.5 rounded-xl font-bold text-sm whitespace-nowrap transition ${
+                  activeReportTab === tab.id ? 'bg-emerald-700 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }">
+                ${tab.label}
+              </button>
+            `).join('')}
+          </div>
+
+          ${activeReportTab === 'monthly' ? `
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              <select onchange="reportMemberFilter = this.value; renderView();" class="p-3 rounded-xl border border-slate-300 bg-white font-bold text-sm">
+                <option value="all">${t('selectMember')}: ${t('all')}</option>
+                ${db.members.map(m => `<option value="${m.id}" ${reportMemberFilter === m.id ? 'selected' : ''}>${m.name}</option>`).join('')}
+              </select>
+              <select onchange="reportMethodFilter = this.value; renderView();" class="p-3 rounded-xl border border-slate-300 bg-white font-bold text-sm">
+                <option value="all">${t('paymentMethod')}: ${t('all')}</option>
+                <option value="upi" ${reportMethodFilter === 'upi' ? 'selected' : ''}>${t('upi')}</option>
+                <option value="cash" ${reportMethodFilter === 'cash' ? 'selected' : ''}>${t('cash')}</option>
+              </select>
+            </div>
+          ` : ''}
+        </div>
+
+        <div id="printable-report-box" class="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs overflow-x-auto">
+          <div class="mb-4">
+            <h3 class="text-lg font-extrabold text-slate-900">${db.settings.ownerName} — ${tabs.find(x => x.id === activeReportTab)?.label}</h3>
+            <p class="text-xs text-slate-500">${new Date().toLocaleDateString('en-IN')}</p>
+          </div>
+          ${reportTableHtml}
+        </div>
+      `;
+    }
+
+    function exportCurrentReportCSV() {
+      const table = document.getElementById('report-data-table');
+      if (!table) return;
+      const rows = Array.from(table.querySelectorAll('tr'));
+      const csvContent = '\uFEFF' + rows.map(row => {
+        const cols = Array.from(row.querySelectorAll('th, td'));
+        return cols.map(c => `"${c.innerText.replace(/"/g, '""').trim()}"`).join(',');
+      }).join('\n');
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Kartar_Singh_Patti_${activeReportTab}_${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast(t('exportCsv') + ' ✓');
+    }
+
+    function printElement(elementId) {
+      const source = document.getElementById(elementId);
+      const printArea = document.getElementById('print-area');
+      if (!source || !printArea) return;
+      printArea.innerHTML = source.innerHTML;
+      printArea.classList.remove('hidden');
+      window.print();
+      printArea.classList.add('hidden');
+    }
+
+    // =========================================================================
+    // VIEW 8: SETTINGS & JSON BACKUP / RESTORE (सेटिंग्स और बैकअप)
+    // =========================================================================
+    function renderSettings(container) {
+      const s = db.settings;
+      container.innerHTML = `
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- Owner & App Settings Form -->
+          <form onsubmit="saveAdminSettings(event)" class="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200 shadow-xs space-y-4">
+            <h2 class="text-xl font-extrabold text-slate-900 flex items-center gap-2">
+              <i data-lucide="settings" class="w-6 h-6 text-emerald-700"></i>
+              <span>${t('ownerProfile')}</span>
+            </h2>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-1">${t('ownerName')}</label>
+                <input id="set-owner" type="text" required value="${s.ownerName}" class="w-full p-3.5 rounded-2xl border border-slate-300 font-bold" />
+              </div>
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-1">UPI ID</label>
+                <input id="set-upi" type="text" required value="${s.upiId}" class="w-full p-3.5 rounded-2xl border border-slate-300 font-bold" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-1">${t('ownerMobile')}</label>
+                <input id="set-mobile" type="tel" value="${s.ownerMobile || ''}" class="w-full p-3.5 rounded-2xl border border-slate-300" />
+              </div>
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-1">${t('adminPin')}</label>
+                <input id="set-pin" type="text" inputmode="numeric" minlength="4" maxlength="6" required value="${s.adminPin}"
+                  class="w-full p-3.5 rounded-2xl border border-slate-300 font-extrabold tracking-widest" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-1">${t('defaultPattiAmt')}</label>
+                <input id="set-pat-amt" type="number" required value="${s.defaultPattiAmount}" class="w-full p-3.5 rounded-2xl border border-slate-300 font-bold" />
+              </div>
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-1">${t('defaultMembersCount')}</label>
+                <input id="set-mem-cnt" type="number" required value="${s.defaultMembersCount}" class="w-full p-3.5 rounded-2xl border border-slate-300 font-bold" />
+              </div>
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-1">${t('defaultDuration')}</label>
+                <input id="set-dur" type="number" required value="${s.defaultDuration}" class="w-full p-3.5 rounded-2xl border border-slate-300 font-bold" />
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-bold text-slate-700 mb-1">${t('defaultLanguage')}</label>
+              <select id="set-lang" class="w-full p-3.5 rounded-2xl border border-slate-300 bg-white font-bold">
+                <option value="hi" ${s.defaultLanguage === 'hi' ? 'selected' : ''}>हिंदी (Hindi)</option>
+                <option value="en" ${s.defaultLanguage === 'en' ? 'selected' : ''}>English</option>
+              </select>
+            </div>
+
+            <button type="submit" class="w-full py-4 rounded-2xl bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold shadow-md transition">
+              ${t('save')}
+            </button>
+          </form>
+
+          <!-- Backup, Restore & Demo Reset -->
+          <div class="space-y-6">
+            <div class="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200 shadow-xs space-y-4">
+              <h3 class="text-lg font-extrabold text-slate-900 flex items-center gap-2">
+                <i data-lucide="database-backup" class="w-6 h-6 text-blue-700"></i>
+                <span>${t('backupRestoreTitle')}</span>
+              </h3>
+              <p class="text-sm text-slate-600 leading-relaxed">${t('backupDesc')}</p>
+
+              <button onclick="downloadJsonBackup()" class="w-full py-3.5 px-5 rounded-2xl bg-blue-700 hover:bg-blue-800 text-white font-bold flex items-center justify-center gap-2 shadow-sm transition">
+                <i data-lucide="download-cloud" class="w-5 h-5"></i>
+                <span>${t('downloadBackup')}</span>
+              </button>
+
+              <div class="pt-2">
+                <label class="w-full py-3.5 px-5 rounded-2xl bg-slate-100 hover:bg-slate-200 border-2 border-dashed border-slate-300 text-slate-800 font-bold flex items-center justify-center gap-2 cursor-pointer transition">
+                  <i data-lucide="upload-cloud" class="w-5 h-5 text-emerald-700"></i>
+                  <span>${t('restoreBackup')}</span>
+                  <input type="file" accept=".json" onchange="handleRestoreJsonBackup(event)" class="hidden" />
+                </label>
+              </div>
+            </div>
+
+            <!-- Demo Data Management & Reset -->
+            <div class="bg-red-50/60 rounded-3xl p-5 sm:p-6 border border-red-200 space-y-4">
+              <h3 class="text-lg font-extrabold text-red-900 flex items-center gap-2">
+                <i data-lucide="shield-alert" class="w-6 h-6 text-red-600"></i>
+                <span>${t('dangerZone')}</span>
+              </h3>
+              <div class="flex flex-col sm:flex-row gap-3">
+                <button onclick="confirmClearDemoData()" class="flex-1 py-3.5 px-4 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-bold text-sm transition">
+                  ${t('resetAllDataBtn')}
+                </button>
+                <button onclick="reloadDemoData()" class="flex-1 py-3.5 px-4 rounded-2xl bg-white hover:bg-amber-50 text-amber-900 border border-amber-300 font-bold text-sm transition">
+                  ${t('restoreDemoBtn')}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function saveAdminSettings(e) {
+      e.preventDefault();
+      db.settings.ownerName = document.getElementById('set-owner').value.trim();
+      db.settings.upiId = document.getElementById('set-upi').value.trim();
+      db.settings.ownerMobile = document.getElementById('set-mobile').value.trim();
+      db.settings.adminPin = document.getElementById('set-pin').value.trim();
+      db.settings.defaultPattiAmount = Number(document.getElementById('set-pat-amt').value);
+      db.settings.defaultMembersCount = Number(document.getElementById('set-mem-cnt').value);
+      db.settings.defaultDuration = Number(document.getElementById('set-dur').value);
+      db.settings.defaultLanguage = document.getElementById('set-lang').value;
+
+      currentLang = db.settings.defaultLanguage;
+      localStorage.setItem('kartar_patti_lang', currentLang);
+      logAudit('Updated Admin Settings');
+      saveDB();
+      applyStaticTranslations();
+      renderSidebar();
+      renderView();
+      showToast(t('save') + ' ✓');
+    }
+
+    function downloadJsonBackup() {
+      const dataStr = JSON.stringify(db, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Kartar_Singh_Patti_Backup_${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast(t('downloadBackup') + ' ✓');
+    }
+
+    function handleRestoreJsonBackup(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        try {
+          const parsed = JSON.parse(evt.target.result);
+          if (parsed && parsed.settings && Array.isArray(parsed.members)) {
+            saveDB(parsed);
+            showToast(t('restoreBackup') + ' ✓');
+            renderView();
+          } else {
+            showToast('Invalid Backup JSON File!', 'error');
+          }
+        } catch (err) {
+          showToast('Error reading JSON file!', 'error');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function confirmClearDemoData() {
+      openModal(t('clearDemoBtn'), `
+        <div class="space-y-4 text-center">
+          <div class="w-16 h-16 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto">
+            <i data-lucide="trash-2" class="w-8 h-8"></i>
+          </div>
+          <p class="text-slate-700 font-semibold">${t('demoBannerText')}</p>
+          <div class="flex gap-3 pt-2">
+            <button onclick="closeModal()" class="flex-1 py-3.5 rounded-2xl bg-slate-100 font-bold">${t('cancel')}</button>
+            <button onclick="executeClearAllData()" class="flex-1 py-3.5 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-bold">${t('confirm')}</button>
+          </div>
+        </div>
+      `);
+    }
+
+    function executeClearAllData() {
+      const preservedSettings = { ...db.settings };
+      db = {
+        isDemo: false,
+        settings: preservedSettings,
+        members: [],
+        pattis: [],
+        payments: [],
+        winners: [],
+        installmentOverrides: {},
+        auditLog: [{
+          id: 'AUD-RESET',
+          timestamp: new Date().toLocaleString('en-IN'),
+          action: 'Cleared all demo data for fresh live production use'
+        }]
+      };
+      saveDB();
+      closeModal();
+      showToast(t('clearDemoBtn') + ' ✓');
+      renderView();
+    }
+
+    function reloadDemoData() {
+      const fresh = createInitialDemoState();
+      saveDB(fresh);
+      showToast(t('restoreDemoBtn') + ' ✓');
+      renderView();
+    }
+
+    // =========================================================================
+    // UNIVERSAL MODAL HELPERS
+    // =========================================================================
+    function openModal(title, bodyHtml) {
+      document.getElementById('modal-title').textContent = title;
+      document.getElementById('modal-body').innerHTML = bodyHtml;
+      document.getElementById('modal-backdrop').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closeModal() {
+      document.getElementById('modal-backdrop').classList.add('hidden');
+    }
+
+    // =========================================================================
+    // APP INITIALIZATION
+    // =========================================================================
+    window.addEventListener('DOMContentLoaded', () => {
+      const savedLang = localStorage.getItem('kartar_patti_lang');
+      currentLang = savedLang || db.settings.defaultLanguage || 'hi';
+      document.documentElement.lang = currentLang;
+      applyStaticTranslations();
+      lucide.createIcons();
+    });
+  </script>
+</body>
+</html>
